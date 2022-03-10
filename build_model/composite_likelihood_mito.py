@@ -617,7 +617,7 @@ def write_lambda_seq_context_for_plotting(lambda_seq_context: Dict[Tuple[str, st
     f = write_file_header(
         file='output_files/sequence_context_vectors/lambda_seq_context_%s.txt' % region_name,
         flanking_range=flanking_range,
-        variable="mutation_type" + '\t' + "lambda_ref_nucleotide" + '\t' + "lambda_mutation_type")
+        variable="mutation_type" + '\t' + "lambda_ref_nucleotide" + '\t' + "lambda_mutation_class")
     for mut in mut_types:
         if mut_group == "Ts" and mut not in class_III_mutations:
             continue  # ie skip
@@ -793,10 +793,10 @@ if __name__ == "__main__":
     for path in ['output_files/sequence_context_vectors/', 'output_files/mutation_likelihoods/']:
         if not os.path.exists(path):
             os.makedirs(path)
-    print(datetime.datetime.now(), "Creating required directories")
+    print("Creating required directories")
 
     print('\n' + 'This script will calculate the likelihood of mutation in the mitochondrial genome')
-    print('\n' + 'This will be done using window size of ' + str(args.context_size) + 'for sequence context')
+    print('\n' + 'This will be done using window size of ' + str(args.context_size) + ' for sequence context')
     # double bracket division to return as int
     flanking_range = [i for i in
                       list(range(-((args.context_size - 1) // 2), (((args.context_size - 1) // 2) + 1)))
