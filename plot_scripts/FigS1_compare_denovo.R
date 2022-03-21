@@ -4,6 +4,7 @@ library(ggplot2)
 # SUPPLEMENTARY FIGURE 1
 # plot a comparison of the likelihood of transitions across different de novo categories and maximum de novo counts per sample
 # using file produced by compare_denovo.py
+
 file <- read.delim(file = '../output_files/denovo/Ts_likelihood_by_category.txt', header = TRUE, sep= "\t")
 
 # format for plot
@@ -23,15 +24,7 @@ ggplot(data = file_plot, aes(y = likelihood, x = threshold, color = mutation, gr
   facet_grid(.~category, scales = "free", labeller = label_wrap_gen(width = 17)) + 
   labs(x = "Maximum number of mutations per sample", y = "Likelihood score") +
   scale_y_continuous(limits = c(0, 10.5)) + 
-  theme(axis.title.x = element_text(size = 10),
-        axis.text.x  = element_text(size = 10),
-        axis.title.y = element_text(size = 10),
-        axis.text.y  = element_text(size = 10),
-        axis.ticks.length = unit(0.15, "cm"),
-        panel.background = element_blank(), 
-        axis.line = element_line(colour = "black"),
-        legend.title = element_text(size = 10),
-        legend.text = element_text(size = 10)) + 
+  paper_theme + 
   scale_color_discrete(labels = c("A>G", "C>T", "G>A", "T>C"), name = "Mutation type")
   
 ggsave("supplementary_figures/FigureS1.png", width = 8.5, height = 3, dpi = 300)
