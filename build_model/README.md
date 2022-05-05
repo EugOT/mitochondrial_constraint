@@ -14,4 +14,4 @@
 
 `correlation_significance_testing.R`: Show that the observed level of neutral variation is more significantly correlated with mutation likelihood scores than locus length, using the *cocor* package. 
 
-
+`simulate_heteroplasmy.R`: Apply a computational model of germline mtDNA mutation and heteroplasmy drift to support a correlation between mutation rates and maximum heteroplasmy.
