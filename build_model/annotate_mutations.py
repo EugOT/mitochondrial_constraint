@@ -24,12 +24,12 @@ def rcrs_pos_to_trinucleotide():
 			trinucleotide = rcrs_pos2ref[str(pos - 1)] + ref + rcrs_pos2ref[str(1)]  # dealing with circular genome
 		elif pos == 1:
 			trinucleotide = rcrs_pos2ref[str(16569)] + ref + rcrs_pos2ref[str(pos + 1)]  # dealing with circular genome
-		elif pos == 3107:  # to handle the 'N'
-			continue  # ie skip
-		elif pos == 3106:  # to handle the 'N'
-			trinucleotide = rcrs_pos2ref[str(pos - 1)] + ref + rcrs_pos2ref[str(3108)]
-		elif pos == 3108:  # to handle the 'N'
-			trinucleotide = rcrs_pos2ref[str(3106)] + ref + rcrs_pos2ref[str(pos + 1)]
+		elif ref == "N":
+			continue  # ie skip, to handle the 'N' spacer expected at m.3107
+		elif rcrs_pos2ref[str(pos + 1)] == "N":
+			trinucleotide = rcrs_pos2ref[str(pos - 1)] + ref + rcrs_pos2ref[str(pos + 2)]
+		elif rcrs_pos2ref[str(pos - 1)] == "N":
+			trinucleotide = rcrs_pos2ref[str(pos - 2)] + ref + rcrs_pos2ref[str(pos + 1)]
 		else:
 			trinucleotide = rcrs_pos2ref[str(pos - 1)] + ref + rcrs_pos2ref[str(pos + 1)]
 		dict[str(pos)] = trinucleotide
