@@ -10,8 +10,6 @@
 
 `annotate_mutations.py`: Annotate the output of `composite_likelihood_mito.py` with annotations needed for downstream analyses, such as variant consequence, gene, and in silico predictions. User specified argument *-input*; the output of `composite_likelihood_mito.py` set as default.
 
-`calibrate_model.py`: Fit linear models of the observed sum maximum heteroplasmy of neutral variants and their mutation likelihood scores. User specified argument *-input*, the file with likelihood scores and observed maximum heteroplasmy; the output of `annotate_mutations.py` set as default.
-
-`correlation_significance_testing.R`: Show that the observed level of neutral variation is more significantly correlated with mutation likelihood scores than locus length, using the *cocor* package. 
+`build_model.sh`: Apply the above analyses to produce a list of annotated mtDNA mutations and their likelihood scores.
 
 `simulate_heteroplasmy.R`: Apply a computational model of germline mtDNA mutation and heteroplasmy drift to support a correlation between mutation rates and maximum heteroplasmy.
