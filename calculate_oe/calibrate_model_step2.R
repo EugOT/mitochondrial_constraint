@@ -29,13 +29,26 @@ calibrate_step2 <- function(prefix = NA, do_sig_test = NA){
   
   if (do_sig_test == "yes"){
     
+    # inititate output file
+    sink(sprintf("output_files/calibration/%scorrelation_significance_testing.txt", prefix), append = FALSE)
+    
+    # Test which variable is more significantly associated with observed neutral variation
+    print("G>A and T>C mutation group (for reference excluding OriB-OriH)")
+    print(summary(lm(obs_max_het ~ sum_likelihood + length, data = file[file$mutation_group == "G>A_and_T>C",])))
+    print("All other mutation group (for reference excluding OriB-OriH)")
+    print(summary(lm(obs_max_het ~ sum_likelihood + length, data = file[file$mutation_group == "other",])))
+    print("G>A and T>C mutation group for OriB-OriH region")
+    print(summary(lm(obs_max_het ~ sum_likelihood + length, data = ori_file[ori_file$mutation_group == "G>A_and_T>C",])))
+    print("All other mutation group for OriB-OriH region")
+    print(summary(lm(obs_max_het ~ sum_likelihood + length, data = ori_file[ori_file$mutation_group == "other",])))
+    
     # Show that the observed level of neutral variation is more significantly correlated with mutation likelihood scores than locus length, using the cocor package. 
     # Testing two correlations which have dependent groups (ie they have one variable in common), and a one-sided hypothesis
     # cor.test is used to extract the correlation coefficient for testing
     
     library(cocor)
     
-    sink(sprintf("output_files/calibration/%scorrelation_significance_testing.txt", prefix), append = FALSE)
+    print("cocor package analysis")
     print("G>A and T>C mutation group (for reference excluding OriB-OriH)")
     print(cocor.dep.groups.overlap(cor.test(file[file$mutation_group == "G>A_and_T>C", c("obs_max_het")], file[file$mutation_group == "G>A_and_T>C", c("sum_likelihood")], method = "pearson")$estimate, 
                              cor.test(file[file$mutation_group == "G>A_and_T>C", c("obs_max_het")], file[file$mutation_group == "G>A_and_T>C", c("length")], method = "pearson")$estimate, 

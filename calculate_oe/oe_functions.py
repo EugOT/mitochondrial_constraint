@@ -78,7 +78,9 @@ def calibrate(
 		sum_lr=sum_dict[(identifier, mut_group, 'sum_LR', region)])
 
 
-def calculate_exp(sum_dict: Dict[Tuple[str, str, str, str], Union[float, int]], identifier: str, fit_parameters: str):
+def calculate_exp(
+		identifier: Union[str, Tuple[int, int]],
+		sum_dict: Dict[Tuple[Union[str, Tuple[int, int]], str, str, str], Union[float, int]], fit_parameters: str):
 	"""Calculate the expected sum maximum heteroplasmy for a category of variants.
 
 	:param sum_dict: dictionary with the possible variant count and sum mutation scores needed for calculation
@@ -104,7 +106,9 @@ def calculate_exp(sum_dict: Dict[Tuple[str, str, str, str], Union[float, int]], 
 	return exp
 
 
-def calculate_obs(identifier: str, sum_dict: Dict[Tuple[str, str, str, str], Union[float, int]]):
+def calculate_obs(
+		identifier: Union[str, Tuple[int, int]],
+		sum_dict: Dict[Tuple[Union[str, Tuple[int, int]], str, str, str], Union[float, int]]):
 	"""Calculate the observed sum maximum heteroplasmy for a category of variants.
 
 	:param identifier: the identifier of the variant category to calculate the observed for
@@ -117,7 +121,9 @@ def calculate_obs(identifier: str, sum_dict: Dict[Tuple[str, str, str, str], Uni
 		(identifier, 'other', 'obs_max_het', 'ori')]
 
 
-def calculate_total(identifier: str, sum_dict: Dict[Tuple[str, str, str, str], Union[float, int]]):
+def calculate_total(
+		identifier: Union[str, Tuple[int, int]],
+		sum_dict: Dict[Tuple[Union[str, Tuple[int, int]], str, str, str], Union[float, int]]):
 	"""Calculate the total count of possible variants for a group of variants.
 
 	:param identifier: the identifier of the variant category to calculate the observed for
@@ -143,13 +149,13 @@ def calculate_CI(obs_max_het: float, total: int, exp_max_het: float, max_paramet
 	# use expected times a varying parameter, define range of varying parameters to assess
 	varying_parameters = np.arange(0.001, max_parameter, 0.001).tolist()
 	
-	# express observed as proportion of possible to bound between 0-1, note can't equal 0 or 1
-	if (obs_max_het / total) == 0:
-		prop_poss_maxhet = 0.001
-	elif (obs_max_het / total) == 1:
-		prop_poss_maxhet = 0.999
-	else:
-		prop_poss_maxhet = obs_max_het / total
+	# express observed as proportion of possible to bound between 0-1
+	prop_poss_maxhet = obs_max_het / total
+	# if 0 or 1 set within range to enable assessment, use minimum possible observed to be conservative
+	if prop_poss_maxhet == 0:
+		prop_poss_maxhet = 0.1 / total
+	elif prop_poss_maxhet == 1:
+		prop_poss_maxhet = 1 - (0.1 / total)
 	
 	beta_distrib = []
 	for vp in varying_parameters:
@@ -190,7 +196,13 @@ def calculate_pvalue(obs_max_het: float, total: int, exp_max_het: float):
 	:return: less_than_pvalue, the probability of observing a value that is less than or equal to the observed,
 	given the expected value
 	"""
-	prop_poss_maxhet = (obs_max_het / total) if obs_max_het != 0 else 0.001  # to enable assessment
+	# express observed as proportion of possible to bound between 0-1
+	prop_poss_maxhet = obs_max_het / total
+	# if 0 or 1 set within range to enable assessment, use minimum possible observed to be conservative
+	if prop_poss_maxhet == 0:
+		prop_poss_maxhet = 0.1 / total
+	elif prop_poss_maxhet == 1:
+		prop_poss_maxhet = 1 - (0.1 / total)
 	a = exp_max_het + 1
 	b = total - exp_max_het + 1
 	less_than_pvalue = beta.cdf(prop_poss_maxhet, a, b)

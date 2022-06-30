@@ -71,7 +71,7 @@ mtDNA_simulate <- function(p){
                 back_prob = 0
               } else {
                 prob = j  # probability of mutation, specific to the position with the mutation, ie remaining reference alleles having the same mutation occur
-                back_prob = z * j  # probability of back mutation
+                back_prob = z * j  # probability of back mutation, where z is a multiplier of the 'forward' probability j
               }
               
               # rbinom simulate random number from the binomial distribution
@@ -128,7 +128,7 @@ mtDNA_simulate <- function(p){
                 back_prob = 0
               } else {
                 prob = j  # probability of mutation - specific to the position with the mutation, ie remaining reference alleles having the same mutation occur
-                back_prob = z * j  # probability of back mutation
+                back_prob = z * j  # probability of back mutation, where z is a multiplier of the 'forward' probability j
               }
               
               # rbinom simulate random number from the binomial distribution
@@ -171,13 +171,13 @@ options(digits=22)  # so R displays maximum decimal places
 ### first replicate data from Colgnahi et al, Figure 2B for mature oocytes
 
 # establish parameters
-mutation_rates = 10^-8
-population_size = 10000
-num_generations = 1
-num_mt_bottleneck = list(8, 16, 32, 64, 128)
-num_mt_zygote = 2^19
-back_mutation_rates = 1
-starting_heteroplasmy = 0.1
+mutation_rates = 10^-8  # mutation rate per bp
+population_size = 10000  # number of individuals in population
+num_generations = 1  # number of generations to model across
+num_mt_bottleneck = list(8, 16, 32, 64, 128)  # number of mtDNA copies in the bottleneck
+num_mt_zygote = 2^19  # number of mtDNA copies in the zygote
+back_mutation_rates = 1  # a multiplier to apply to the 'forward' mutation rate, ie z = 1 applies the same back and forward mutation rates
+starting_heteroplasmy = 0.1  # heteroplasmy level in generation 0
 
 # file to write results to
 sim_file_path <-  "../output_files/simulation/colnaghi_etal_replication.txt"
