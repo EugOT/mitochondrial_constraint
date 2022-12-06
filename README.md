@@ -1,6 +1,6 @@
 # Code for mitochondrial constraint manuscript
 
-This scripts in this repo were used to quantify constraint across the human mitochondrial genome, and to generate all data and figures presented in [our manuscript](<placeholder>)
+This scripts in this repo were used to quantify constraint across the human mitochondrial genome, and to generate all data and figures presented in [our manuscript.](<placeholder>)
 
 ## Overview of repo:
 
