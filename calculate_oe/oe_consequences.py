@@ -20,7 +20,7 @@ def consequences_oe(
 	file.write(header + '\n')
 	
 	consequences = [
-			"synonymous", "missense", "stop_gain", "start_lost", "stop_lost", "rRNA", "tRNA", "intergenic", "control_region", "other_non-coding"]
+			"synonymous", "missense", "stop_gain", "start_lost", "stop_lost", "rRNA", "tRNA", "intergenic"]
 	
 	conseq_sum = initialize_sum_dict(identifier_list=consequences)
 	# for each locus, sum observed and likelihood for each variant type
@@ -51,12 +51,6 @@ def consequences_oe(
 				conseq_sum = sum_obs_likelihood(
 					mutation=mutation, identifier=name, region=region_to_use,
 					observed=row[obs_value], likelihood=row["Likelihood"], dict=conseq_sum)
-			if "intergenic" in row["consequence"]:
-				# now recalculate for both inside and outside the control region separately
-				name = 'control_region' if int(row["POS"]) <= 576 or int(row["POS"]) >= 16024 else 'other_non-coding'
-				conseq_sum = sum_obs_likelihood(
-					mutation=mutation, identifier=name, region=region_to_use, dict=conseq_sum,
-					observed=row[obs_value], likelihood=row["Likelihood"])
 	
 	for consequence in consequences:
 		calculate_oe(item=consequence, sum_dict=conseq_sum, fit_parameters=fit_parameters, file=file)

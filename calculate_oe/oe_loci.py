@@ -22,7 +22,7 @@ def loci_oe(input_file: str, obs_value: str, fit_parameters: str, output_prefix:
 	# extract loci to calculate obs:exp for
 	mitomap_loci = {}
 	for row in csv.DictReader(open('required_files/databases/mitomap_genome_loci.txt'), delimiter='\t'):
-		if abs(int(row["Ending"]) - int(row["Starting"])) > 15:  # to skip very small loci
+		if abs(int(row["Ending"]) - int(row["Starting"])) > 5:  # to skip very small loci
 			mitomap_loci[(int(row["Starting"]), int(row["Ending"]))] = (row["Map_Locus"], row["Description"])
 	
 	# to handle variants in two genes
@@ -79,10 +79,11 @@ def loci_oe(input_file: str, obs_value: str, fit_parameters: str, output_prefix:
 				print("Calculating values for", variant_type, "in", str(mitomap_loci[loci][0]))
 				
 				output = file_genes if ((variant_type != "SNV") or ("RNA" in mitomap_loci[loci][1])) else file_noncoding
-				output.write(
-					mitomap_loci[loci][0] + '\t' + mitomap_loci[loci][1] + '\t' + str(loci[0]) + '\t' + str(loci[1])
-					+ '\t' + variant_type + '\t' + str(total_all) + '\t' + str(obs_max_het) + '\t' + str(exp_max_het)
-					+ '\t' + str(ratio_oe) + '\t' + str(lower_CI) + '\t' + str(upper_CI) + '\t' + str(pvalue) + '\n')
+				if (output == file_genes) or ((output == file_noncoding) and (round(exp_max_het) >= 10)):
+					output.write(
+						mitomap_loci[loci][0] + '\t' + mitomap_loci[loci][1] + '\t' + str(loci[0]) + '\t' + str(loci[1])
+						+ '\t' + variant_type + '\t' + str(total_all) + '\t' + str(obs_max_het) + '\t' + str(exp_max_het)
+						+ '\t' + str(ratio_oe) + '\t' + str(lower_CI) + '\t' + str(upper_CI) + '\t' + str(pvalue) + '\n')
 
 
 if __name__ == "__main__":

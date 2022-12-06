@@ -31,12 +31,8 @@ def protein_annot_oe(
 					prot_sum = sum_obs_likelihood(
 						mutation=mutation, identifier="site", region='ref_exc_ori',
 						observed=row[obs_value], likelihood=row["Likelihood"], dict=prot_sum)
-				name = "transmembrane" if "transmem" in row["uniprot_annotation"] else "not-transmembrane"
-				prot_sum = sum_obs_likelihood(
-					mutation=mutation, identifier=name, region='ref_exc_ori',
-					observed=row[obs_value], likelihood=row["Likelihood"], dict=prot_sum)
 						
-	for annot in ["site", "transmembrane", "not-transmembrane"]:
+	for annot in ["site"]:
 		calculate_oe(item=annot, sum_dict=prot_sum, fit_parameters=fit_parameters, file=file)
 
 
@@ -108,19 +104,20 @@ def RNA_base_types_oe(input_file: str, obs_value: str, fit_parameters: str, outp
 		calculate_oe(item=RNA_type, sum_dict=RNA_type_sum, fit_parameters=fit_parameters, file=file)
 	
 	# also capture RNA modified bases
-	RNA_mods = ["modified_tRNA", "modified_rRNA"]
+	RNA_mods = ["modified_tRNA", "modified_rRNA", "non-modified_tRNA", "non-modified_rRNA"]
 	RNA_mod_sum = initialize_sum_dict(identifier_list=RNA_mods)
 	
 	for row in csv.DictReader(open(input_file), delimiter='\t'):
 		mutation = row["REF"] + '>' + row["ALT"]
+		identifier = ""
 		if int(row["POS"]) not in excluded_sites:
-			if row["symbol"].startswith('MT-T') and row["RNA_modified"]:
+			if row["symbol"].startswith('MT-T'):
+				identifier = "modified_tRNA" if row["RNA_modified"] else "non-modified_tRNA"
+			if row["symbol"].startswith('MT-R'):
+				identifier = "modified_rRNA" if row["RNA_modified"] else "non-modified_rRNA"
+			if identifier != "":
 				RNA_mod_sum = sum_obs_likelihood(
-					mutation=mutation, identifier="modified_tRNA", region='ref_exc_ori',
-					observed=row[obs_value], likelihood=row["Likelihood"], dict=RNA_mod_sum)
-			if row["symbol"].startswith('MT-R') and row["RNA_modified"]:
-				RNA_mod_sum = sum_obs_likelihood(
-					mutation=mutation, identifier="modified_rRNA", region='ref_exc_ori',
+					mutation=mutation, identifier=identifier, region='ref_exc_ori',
 					observed=row[obs_value], likelihood=row["Likelihood"], dict=RNA_mod_sum)
 	
 	for mod in RNA_mods:
@@ -244,16 +241,16 @@ def disease_vars_oe(input_file: str, obs_value: str, fit_parameters: str, output
 	for row in csv.DictReader(open(input_file), delimiter='\t'):
 		mutation = row["REF"] + '>' + row["ALT"]
 		if int(row["POS"]) not in excluded_sites:
-			if row["consequence"] != "intergenic_variant":  # exclude any non-coding
-				status = ''
-				if "Cfrm" in row["mitomap_status"]:
-					status = "Cfrm-MITOMAP"
-				elif "Reported" in row["mitomap_status"]:
-					status = "Reported-MITOMAP"
-				if status != '':
-					mitomap_sum = sum_obs_likelihood(
-						mutation=mutation, identifier=status, region='ref_exc_ori',
-						observed=row[obs_value], likelihood=row["Likelihood"], dict=mitomap_sum)
+			#if row["consequence"] != "intergenic_variant":  # exclude any non-coding
+			status = ''
+			if "Cfrm" in row["mitomap_status"]:
+				status = "Cfrm-MITOMAP"
+			elif "Reported" in row["mitomap_status"]:
+				status = "Reported-MITOMAP"
+			if status != '':
+				mitomap_sum = sum_obs_likelihood(
+					mutation=mutation, identifier=status, region='ref_exc_ori',
+					observed=row[obs_value], likelihood=row["Likelihood"], dict=mitomap_sum)
 	
 	for status in mitomap_status:
 		calculate_oe(item=status, sum_dict=mitomap_sum, fit_parameters=fit_parameters, file=file)
@@ -267,10 +264,10 @@ def disease_vars_oe(input_file: str, obs_value: str, fit_parameters: str, output
 		mutation = row["REF"] + '>' + row["ALT"]
 		if int(row["POS"]) not in excluded_sites:
 			if (row["clinvar_interp"] + "-ClinVar") in clinvar_status:
-				if row["consequence"] != "intergenic_variant":  # exclude any non-coding
-					clinvar_sum = sum_obs_likelihood(
-						mutation=mutation, identifier=row["clinvar_interp"] + "-ClinVar", region='ref_exc_ori',
-						observed=row[obs_value], likelihood=row["Likelihood"], dict=clinvar_sum)
+				#if row["consequence"] != "intergenic_variant":  # exclude any non-coding
+				clinvar_sum = sum_obs_likelihood(
+					mutation=mutation, identifier=row["clinvar_interp"] + "-ClinVar", region='ref_exc_ori',
+					observed=row[obs_value], likelihood=row["Likelihood"], dict=clinvar_sum)
 	
 	for status in clinvar_status:
 		calculate_oe(item=status, sum_dict=clinvar_sum, fit_parameters=fit_parameters, file=file)

@@ -5,4 +5,4 @@ python3 calculate_oe/calibrate_model_step1.py
 Rscript calculate_oe/calibrate_model_step2.R
 python3 calculate_oe/oe_consequences.py
 python3 calculate_oe/oe_loci.py
-#python3 calculate_oe/oe_other.py
+python3 calculate_oe/oe_other.py
