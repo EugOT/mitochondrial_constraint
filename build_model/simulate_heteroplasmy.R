@@ -218,7 +218,7 @@ sim_bootstrap <- function(mutation_rate, df) {
   colnames(output) <-c("mutation_rate", "max_heteroplasmy")
   output[1,] <- c(NA, NA)
   
-  # for each mutation rate, do 1000 boostrap replicates sampling 100 from the total population (10,000)
+  # for each mutation rate, do 1000 bootstrap replicates sampling 100 from the total population (10,000)
   for(k in 1:1000){
     j <- trimws(mutation_rate) 
     table <- df %>% filter(mutation_rate == !!j) %>%

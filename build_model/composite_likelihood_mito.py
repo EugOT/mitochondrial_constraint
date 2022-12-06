@@ -710,7 +710,7 @@ def composite_likelihood(lambda_ref_nuc: Dict[str, float], lambda_mut_class: Dic
     and value is likelihood ratio of sequence context, in ori region only
     :param context_size: how many nucleotides to include for sequence context, 3 is default (trinucleotide)
     """
-    f = open('output_files/mutation_likelihoods/mitochondrial_mutation_likelihoods.txt', "w")
+    f = open('output_files/mutation_likelihoods/mito_mutation_likelihoods.txt', "w")
     f.write("POS	REF	ALT	Likelihood" + '\n')
 
     # how many nucleotides either side to include in model, +1 since range end not included

@@ -1,6 +1,6 @@
 ## Overview:
 
-`compile_denovo.py`: Parse lists of de novo variants obtained from the literature, and in-house datasets. Details on each data source are provided in <placeholder link to manuscript>. Outputs list of all de novo and their source.
+`compile_denovo.py`: Parse lists of de novo variants obtained from the literature and in-house datasets. Outputs list of all de novo calls and their source.
 
 `compare_denovo.py`: Compare the mutational likelihoods of transitions, across different sources (germline, somatic tissue, somatic cancer) and sample de novo counts.
 
@@ -10,6 +10,6 @@
 
 `annotate_mutations.py`: Annotate the output of `composite_likelihood_mito.py` with annotations needed for downstream analyses, such as variant consequence, gene, and in silico predictions. User specified argument *-input*; the output of `composite_likelihood_mito.py` set as default.
 
-`build_model.sh`: Apply the above analyses to produce a list of annotated mtDNA mutations and their likelihood scores.
+`build_model.sh`: Apply the above analyses to produce a list of annotated mtDNA variants and their likelihood scores.
 
 `simulate_heteroplasmy.R`: Apply a computational model of germline mtDNA mutation and heteroplasmy drift to support a correlation between mutation rates and maximum heteroplasmy.

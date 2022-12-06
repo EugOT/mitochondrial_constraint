@@ -1,6 +1,6 @@
 import csv
 import datetime
-from typing import Dict, TextIO
+from typing import Dict, TextIO, Union
 import os
 
 
@@ -19,15 +19,20 @@ def build_sample_dict(sample: str, dict: Dict[str, int]):
     return dict
 
 
-def write_denovo(file: TextIO, sample: str, variant: str, dict: Dict[str, int]):
+def write_denovo(file: TextIO, sample: str, variant: str, dict: Union[Dict[str, int], int]):
     """Writes out de novo variants alongside sample it was found in, and the de novo count of that sample.
 
     :param file: file that the de novo variants will be written to
     :param sample: sample name
     :param variant: de novo variant, in RefPosAlt format
-    :param dict: a dictionary, where the key is the sample, and the value is the sample's de novo count
+    :param dict: a dictionary, where the key is the sample, and the value is the sample's de novo count - the count can
+    also be directly provided
     """
-    file.write(variant + '\t' + sample + '\t' + str(dict[sample]) + '\n')
+    if type(dict) is int:
+        sample_count = dict
+    else:
+        sample_count = dict[sample]
+    file.write(variant + '\t' + sample + '\t' + str(sample_count) + '\n')
 
 
 def rcrs_pos_to_ref():
@@ -113,19 +118,12 @@ def extract_denovo(file: TextIO):
 
     # dataset 5 - from my own SPARK analyses
 
-    for row in csv.reader(
-            open('required_files/input_denovo/germline/SPARK_mtDNA_de_novo_oneperline_unaffected_filtered.txt'),
-            delimiter='\t'):
-        # first skip header and lines with missing or no de novo
-        if ("de_novo" not in row[2]) and ("None" not in row[2]) and ("Missing" not in row[2]):
-            sample_counts = build_sample_dict(sample=(row[0] + "-SPARK" + "-germline"), dict=sample_counts)
-
-    for row in csv.reader(
-            open('required_files/input_denovo/germline/SPARK_mtDNA_de_novo_oneperline_unaffected_filtered.txt'),
-            delimiter='\t'):
-        if ("de_novo" not in row[2]) and ("None" not in row[2]) and ("Missing" not in row[2]):
-            write_denovo(file=file, sample=(row[0] + "-SPARK" + "-germline"), variant=row[2], dict=sample_counts)
-
+    for row in csv.DictReader(open('required_files/input_denovo/germline/SPARK_mtDNA_de_novo.txt'), delimiter='\t'):
+        s_counts = int(row["number"])  # taken directly rather than within dictionary
+        write_denovo(
+            file=file, sample=("sample_from" + "-SPARK" + "-germline"), variant=row["de_novo"], dict=s_counts)
+        
+        
     # SOMATIC TISSUE
 
     # dataset 2 from germline (from Rebolledo-Jaramillo et al 2014 PNAS)
