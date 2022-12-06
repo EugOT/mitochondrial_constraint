@@ -1,3 +1,4 @@
+haplogroup_variants
 A7124G
 C960CC
 C16260A
