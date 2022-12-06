@@ -1,19 +1,24 @@
 # Code for mitochondrial constraint manuscript
 
-<placeholder for short blurb summary of the study>
-
-Link to manuscript: <placeholder>
+This scripts in this repo were used to quantify constraint across the human mitochondrial genome, and to generate all data and figures presented in [our manuscript](<placeholder>)
 
 ## Overview of repo:
 
-`build_model`: code for the mitochondrial composite likelihood model, and curation of de novo mutations used to quantify mutability.
+`build_model`: code used to build the mitochondrial mutational model, and to curate of de novo mutations used to quantify mutability.
 
-`output_files`: the files output by the code.
+`calculate_oe`: code for assessment of mitochondrial constraint across functional variant classes and loci. 
 
-`plot_scripts`: scripts used for plotting and figure generation. 
+`other`: code for other analyses presented in the manuscript.
 
 `required_files`: input files for code.
 
+`regional_constraint`: code used to identify regional constraint.
+
+`local_constraint` code used to identify local constraint and generate the mitochondrial local constraint (MLC) score.
+
+`figure_scripts`: scripts used for generating figures, video and datasets.
+
+
 See the README in each directory for more information on contents.
 
-The code was run using <placeholder text for python and R details>
+The code was run using Python v3.10, R v3.6.1, and ChimeraX v1.3.
