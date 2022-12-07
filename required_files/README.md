@@ -28,3 +28,5 @@
 `synthetic_vcf`: Files in this directory obtained as described [previously](https://github.com/broadinstitute/gnomad-mitochondria/tree/main/gnomad_mitochondria/manuscript_analyses).
 
 `svg_input`: Files used to generate svg figures displaying the canonical secondary structure of a tRNA, or each rRNA, obtained as previously described [by Lake et al](https://academic.oup.com/bioinformatics/article/38/10/2967/6567356).
+
+`pdb`: Files used to generate 3D figures and videos, as well as to calculate distance from regional constraint, obtained from [Protein Data Bank](https://www.rcsb.org/) or [UniProt](https://www.uniprot.org/).
