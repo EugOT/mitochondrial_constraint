@@ -384,7 +384,7 @@ def annotate(input_file: str):
 		tRNA_dom = RNA_dom_mod[(row["POS"], "domain")] if (row["POS"], "domain") in RNA_dom_mod else ''
 		RNA_mod = RNA_dom_mod[(row["POS"], "modified")] if (row["POS"], "modified") in RNA_dom_mod else ''
 		RNA_base = str(RNA_type[row["POS"]]).strip('[]').replace("'", "").replace(" ", "") if row["POS"] in RNA_type else ''
-		RNA_bridge = "Yes" if ("\n" + row["POS"]+ "\n") in open('required_files/other_annotations/rRNA_bridge_bases.txt').read() else "No"
+		RNA_bridge = "Yes" if ("\n" + row["POS"] + "\n") in open('required_files/other_annotations/rRNA_bridge_bases.txt').read() else "No"
 		uniprot_annot = str(uniprot[int(row["POS"])]).strip('[]').replace("'", "").replace(" ", "") \
 			if int(row["POS"]) in uniprot else ''
 		other_prot_annot = str(other_prot[int(row["POS"])]).strip('[]').replace("'", "").replace(" ", "") \
