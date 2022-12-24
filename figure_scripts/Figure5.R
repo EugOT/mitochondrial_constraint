@@ -1,0 +1,164 @@
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(png)
+library(stringr)
+library(readr)
+
+# FIGURE 5
+
+# Figure 5a - plot of local constraint across mtDNA
+
+scores <- read.delim(file = '../output_files/local_constraint/per_base_local_constraint.txt', header = TRUE, sep = "\t")
+
+svg <- readPNG("figures/Figure5a_top.png") 
+plotA_top <- ggplot() + 
+  background_image(svg) +
+  theme(plot.margin = unit(c(0.05, 1.25, 0.05, 0.9), "cm"),
+        panel.background = element_blank())
+
+plotA1 <- ggplot(scores, aes(x = as.numeric(POS), y = as.numeric(MLC_pos_score))) +
+  geom_line(aes(color = pctRank_mean_OEUF)) + 
+  scale_color_gradient2(midpoint = 0.5, low = "blue", mid = "white", high = "red", space = "Lab", limits = c(0, 1)) +
+  scale_x_continuous(expand = c(0, 0), breaks = c(1, 16569)) + 
+  ylim(0, 1) + 
+  labs(color = "MLC score", x = "Position", y = "MLC score") + 
+  paper_theme +
+  theme(plot.margin = unit(c(0, 0.25, 0, 0.25), "cm"),
+        axis.title.x = element_text(vjust = 5),
+        legend.key.height = unit(0.4, 'cm')) +
+  geom_hline(yintercept = 0.95, linetype = "dashed", color = "dark grey", size = 0.2)
+
+svg <- readPNG("figures/Figure5a_mtDNA.png") 
+plotA2 <- ggplot() + 
+  background_image(svg) +
+  theme(plot.margin = unit(c(0, 1.73, 0.25, 0.8), "cm"))
+
+
+# Figure 5b - bar plot to show the odds ratio enrichment of pathogenic vs benign variants across local constraint score bins
+
+# divide into four bins
+scores$rank_bin <- ifelse(scores$MLC_pos_score <= 0.25, "0.0-0.25", 
+                          ifelse(scores$MLC_pos_score > 0.25 & scores$MLC_pos_score <= 0.5, "0.25-0.50", 
+                                 ifelse(scores$MLC_pos_score > 0.5 & scores$MLC_pos_score <= 0.75, "0.50-0.75", 
+                                        ifelse(scores$MLC_pos_score > 0.75, "0.75-1.0", "error"))))
+
+# assign pathogenic or benign status, including pathogenic and likely pathogenic in clinvar
+scores$group <- ifelse(grepl("Cfrm", scores$mitomap_status) | grepl("athogenic", scores$clinvar_interp), "Pathogenic",
+                        ifelse(grepl("Benign", scores$clinvar_interp), "Benign", "neither")) 
+
+odds_ratio <- function(df) {
+  output <- data.frame(matrix(vector(), ncol = 7))
+  colnames(output) <-c("bin", "value", "se", "lower_CI", "upper_CI", "number_pathogenic", "number_benign")
+  output[1,] <- c(NA, NA, NA, NA, NA, NA, NA)
+  
+  n_pathogenic <- nrow(df[df$group == "Pathogenic", ]) 
+  n_benign <- nrow(df[df$group == "Benign", ])
+  
+  for(group in list("0.0-0.25", "0.25-0.50", "0.50-0.75", "0.75-1.0") ){
+    a = nrow(df[df$rank_bin == group & df$group == "Pathogenic", ])
+    b = nrow(df[df$rank_bin == group & df$group == "Benign", ])
+    c = n_pathogenic - a
+    d = n_benign - b
+    OR <- round((a / b) / (c / d), digits = 4)
+    OR_se <- round(sqrt((1 / a) + (1 / b) + (1 / c) + (1 / d)), digits = 4)
+    OR_lowerCI <- round(exp(log(OR) - (1.96 * OR_se)), digits = 4)
+    OR_upperCI <- round(exp(log(OR) + (1.96 * OR_se)), digits = 4)
+    
+    row <- as.data.frame(t(c(group, OR, OR_se, OR_lowerCI, OR_upperCI, a, b)))
+    colnames(row) <- c("bin", "value", "se", "lower_CI", "upper_CI", "number_pathogenic", "number_benign")
+    output <- rbind(output, row)
+  }
+  output <- output[!is.na(output$bin), ]
+  return(output)
+}
+
+# restrict to missense (most severe) and RNA base changes (ie in genes) - position score same as variant score for these
+or <- odds_ratio(scores[grepl("missense|transcript", scores$consequence) & !grepl("gain|lost|terminal", scores$consequence),])
+
+fisher.test(data.frame(
+  "pathogenic" = as.numeric(or[, c("number_pathogenic")]),
+  "benign" = as.numeric(or[, c("number_benign")]),
+  row.names = c("0.0-0.25", "0.25-0.50", "0.50-0.75", "0.75-1.0"),
+  stringsAsFactors = FALSE
+))
+
+plotB <- ggplot(or, aes(x = bin, y = as.numeric(value), fill = bin)) + 
+  geom_bar(stat = "identity", color = "black") +
+  geom_errorbar(aes(ymin = as.numeric(lower_CI), ymax = as.numeric(upper_CI)), width = 0.5, position = position_dodge(.9), size = 0.5) +
+  scale_y_sqrt(expand = c(0, 0), breaks = c(0, 1, 5, 10)) + 
+  paper_theme +
+  labs(y = "OR (pathogenic vs benign)", x = "MLC score bin") +
+  scale_fill_manual(values = c("#542eff", "#cfb1ff", "#ffbfaa", "#ff4124"), guide = FALSE) +
+  theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.5), "cm"))
+
+# relevant statistis for manuscript
+sum(as.numeric(or$number_pathogenic))
+sum(as.numeric(or$number_benign))
+
+
+# Figure 5c - boxplot to show the MLC score distribution for indels in population databases
+
+# read in gnomAD, filter to PASS only
+gnomad <- read.delim(file = '../required_files/databases/gnomad.genomes.v3.1.sites.chrM.reduced_annotations.tsv', header = TRUE, sep = "\t")
+gnomad <- gnomad[gnomad$filters == "PASS",]
+gnomad$pos <- gnomad$position
+gnomad$type <- ifelse((nchar(as.character(gnomad$ref)) == 1 & nchar(as.character(gnomad$alt)) == 1), "SNV", "indel")
+
+# read in HelixMTdb, extract ref, pos, alt
+helix <- read.delim(file = '../required_files/databases/HelixMTdb_20200327.tsv', header = TRUE, sep = "\t")
+helix <- helix[str_count(helix$alleles, ",") == 1, ]  # remove multiallelic sites
+helix$ref <-  sub(",.*", "", as.character(gsub('\\[|\\]', '', helix$alleles)))
+helix$alt <-  sub(".*,", "", as.character(gsub('\\[|\\]', '', helix$alleles)))
+helix$pos <- sub("chrM:", "", helix$locus)
+helix$type <- ifelse((nchar(as.character(helix$ref)) == 1 & nchar(as.character(helix$alt)) == 1), "SNV", "indel")
+
+# read in MITOMAP, filter to variants observed in genbank
+mitomap <- read.delim(file = '../required_files/databases/MITOMAP_polymorphisms_2022-07-14.txt', header = TRUE, sep = "\t")
+mitomap <- mitomap[mitomap$gbcnt > 0,]
+mitomap$type <- ifelse((nchar(as.character(mitomap$ref)) == 1 & nchar(as.character(mitomap$alt)) == 1) & !grepl(":", mitomap$ref) & !grepl(":", mitomap$alt), "SNV", "indel")
+
+# merge and annotate
+gnomad$db <- "gnomAD"
+helix$db <- "HelixMTdb"
+mitomap$db <- "MITOMAP"
+indels <- rbind(gnomad[gnomad$type == "indel", c("pos", "ref", "alt", "db")],
+                helix[helix$type == "indel", c("pos", "ref", "alt", "db")],
+                mitomap[mitomap$type == "indel", c("pos", "ref", "alt", "db")])
+
+# annotate with position scores
+scores <- read.delim(file = '../output_files/local_constraint/per_base_local_constraint.txt', header = TRUE, sep = "\t")
+scores$pos <- scores$POS
+indels <- merge(indels, scores[!duplicated(scores$POS), c("pos", "MLC_pos_score")], by = "pos", all.x = T)
+
+as.data.frame(indels %>% group_by(db) %>% summarize(median = median(MLC_pos_score), n = n()))
+
+plotC <- ggplot(data = indels, aes(x = db, y = MLC_pos_score, fill = db)) + 
+  geom_boxplot(position = "dodge") +
+  labs(y = 'MLC score', x = "Indels") + 
+  paper_theme +
+  theme(plot.margin = unit(c(0.25, 0.5, 0.25, 0.25), "cm"),
+        axis.text.x  = element_text(size = 7.5)) +
+  ylim(0, 1) +
+  scale_fill_manual(values = c("#F9F6EE", "#F9F6EE", "#F9F6EE"), guide = FALSE)
+
+
+# Figure 5d - table to show the association for platelets vs neutrophils
+
+# manually screenshot and save as png, hack to get desired format
+figd <- readPNG("figures/Figure5d.png") 
+table5 <- ggplot() + 
+  background_image(figd) +
+  theme(plot.margin = unit(c(0.15, 0.5, 0, 1), "cm"),
+        panel.background = element_blank())
+
+
+# compile figure panel
+ggarrange(
+  ggarrange(plotA_top, plotA1, NULL, plotA2, nrow = 4, labels = c("a", "", "", "", ""), heights = c(1.3, 1, -0.05, 0.6), font.label = list(size = 10)),
+  ggarrange(plotB, plotC, nrow = 1, ncol = 2, labels = c("b", "c"), font.label = list(size = 10)), 
+  ggarrange(table5, labels = c("d"), font.label = list(size = 10)),
+  nrow = 3, ncol = 1, heights = c(1.4, 0.65, 0.65)) 
+
+ggsave("figures/Figure5.jpeg", width = 180, height = 170, dpi = 600, units = c("mm"))
