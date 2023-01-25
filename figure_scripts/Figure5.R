@@ -36,7 +36,31 @@ plotA2 <- ggplot() +
   theme(plot.margin = unit(c(0, 1.73, 0.25, 0.8), "cm"))
 
 
-# Figure 5b - bar plot to show the odds ratio enrichment of pathogenic vs benign variants across local constraint score bins
+# Figure 5b - stacked bar plot to show the proportion of each locus type across local constraint score bins
+
+# divide into four bins
+scores$rank_bin <- ifelse(scores$MLC_pos_score <= 0.25, "0.0-0.25", 
+                          ifelse(scores$MLC_pos_score > 0.25 & scores$MLC_pos_score <= 0.5, "0.25-0.50", 
+                                 ifelse(scores$MLC_pos_score > 0.5 & scores$MLC_pos_score <= 0.75, "0.50-0.75", 
+                                        ifelse(scores$MLC_pos_score > 0.75, "0.75-1.0", "error"))))
+# assign biotype
+scores$biotype <- ifelse(grepl("intergenic",scores$consequence), "Non-coding",
+                         ifelse(grepl("MT-R",scores$symbol), "rRNA",
+                                ifelse(grepl("MT-T",scores$symbol), "tRNA",
+                                       ifelse(grepl("MT-A|MT-C|MT-N",scores$symbol), "Protein", "Error"))))
+# biotype colors
+mycolors = c('#ffcc00', '#377eb8', '#984ea3', '#ff7f00')
+
+plotB <- ggplot(scores[!duplicated(scores$POS),], aes(rank_bin, fill = biotype, color = biotype)) + 
+  geom_bar(position = "fill", color = "black", size = 0.25, width = 0.9) +
+  labs(x = 'MLC score quartile', y = 'Proportion', fill = 'Locus type') +
+  paper_theme + 
+  scale_fill_manual(values = mycolors) +
+  scale_colour_manual(values = mycolors, guide = FALSE) +
+  theme(plot.margin = unit(c(0.3, 0.25, 0.25, 0.5), "cm"))
+
+
+# Figure 5c - bar plot to show the odds ratio enrichment of pathogenic vs benign variants across local constraint score bins
 
 # divide into four bins
 scores$rank_bin <- ifelse(scores$MLC_pos_score <= 0.25, "0.0-0.25", 
@@ -84,64 +108,18 @@ fisher.test(data.frame(
   stringsAsFactors = FALSE
 ))
 
-plotB <- ggplot(or, aes(x = bin, y = as.numeric(value), fill = bin)) + 
+plotC <- ggplot(or, aes(x = bin, y = as.numeric(value), fill = bin)) + 
   geom_bar(stat = "identity", color = "black") +
   geom_errorbar(aes(ymin = as.numeric(lower_CI), ymax = as.numeric(upper_CI)), width = 0.5, position = position_dodge(.9), size = 0.5) +
   scale_y_sqrt(expand = c(0, 0), breaks = c(0, 1, 5, 10)) + 
   paper_theme +
-  labs(y = "OR (pathogenic vs benign)", x = "MLC score bin") +
+  labs(y = "OR (pathogenic vs benign)", x = "MLC score quartile") +
   scale_fill_manual(values = c("#542eff", "#cfb1ff", "#ffbfaa", "#ff4124"), guide = FALSE) +
-  theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.5), "cm"))
+  theme(plot.margin = unit(c(0.3, 0.25, 0.25, 0.5), "cm"))
 
 # relevant statistis for manuscript
 sum(as.numeric(or$number_pathogenic))
 sum(as.numeric(or$number_benign))
-
-
-# Figure 5c - boxplot to show the MLC score distribution for indels in population databases
-
-# read in gnomAD, filter to PASS only
-gnomad <- read.delim(file = '../required_files/databases/gnomad.genomes.v3.1.sites.chrM.reduced_annotations.tsv', header = TRUE, sep = "\t")
-gnomad <- gnomad[gnomad$filters == "PASS",]
-gnomad$pos <- gnomad$position
-gnomad$type <- ifelse((nchar(as.character(gnomad$ref)) == 1 & nchar(as.character(gnomad$alt)) == 1), "SNV", "indel")
-
-# read in HelixMTdb, extract ref, pos, alt
-helix <- read.delim(file = '../required_files/databases/HelixMTdb_20200327.tsv', header = TRUE, sep = "\t")
-helix <- helix[str_count(helix$alleles, ",") == 1, ]  # remove multiallelic sites
-helix$ref <-  sub(",.*", "", as.character(gsub('\\[|\\]', '', helix$alleles)))
-helix$alt <-  sub(".*,", "", as.character(gsub('\\[|\\]', '', helix$alleles)))
-helix$pos <- sub("chrM:", "", helix$locus)
-helix$type <- ifelse((nchar(as.character(helix$ref)) == 1 & nchar(as.character(helix$alt)) == 1), "SNV", "indel")
-
-# read in MITOMAP, filter to variants observed in genbank
-mitomap <- read.delim(file = '../required_files/databases/MITOMAP_polymorphisms_2022-07-14.txt', header = TRUE, sep = "\t")
-mitomap <- mitomap[mitomap$gbcnt > 0,]
-mitomap$type <- ifelse((nchar(as.character(mitomap$ref)) == 1 & nchar(as.character(mitomap$alt)) == 1) & !grepl(":", mitomap$ref) & !grepl(":", mitomap$alt), "SNV", "indel")
-
-# merge and annotate
-gnomad$db <- "gnomAD"
-helix$db <- "HelixMTdb"
-mitomap$db <- "MITOMAP"
-indels <- rbind(gnomad[gnomad$type == "indel", c("pos", "ref", "alt", "db")],
-                helix[helix$type == "indel", c("pos", "ref", "alt", "db")],
-                mitomap[mitomap$type == "indel", c("pos", "ref", "alt", "db")])
-
-# annotate with position scores
-scores <- read.delim(file = '../output_files/local_constraint/per_base_local_constraint.txt', header = TRUE, sep = "\t")
-scores$pos <- scores$POS
-indels <- merge(indels, scores[!duplicated(scores$POS), c("pos", "MLC_pos_score")], by = "pos", all.x = T)
-
-as.data.frame(indels %>% group_by(db) %>% summarize(median = median(MLC_pos_score), n = n()))
-
-plotC <- ggplot(data = indels, aes(x = db, y = MLC_pos_score, fill = db)) + 
-  geom_boxplot(position = "dodge") +
-  labs(y = 'MLC score', x = "Indels") + 
-  paper_theme +
-  theme(plot.margin = unit(c(0.25, 0.5, 0.25, 0.25), "cm"),
-        axis.text.x  = element_text(size = 7.5)) +
-  ylim(0, 1) +
-  scale_fill_manual(values = c("#F9F6EE", "#F9F6EE", "#F9F6EE"), guide = FALSE)
 
 
 # Figure 5d - table to show the association for platelets vs neutrophils
@@ -157,7 +135,7 @@ table5 <- ggplot() +
 # compile figure panel
 ggarrange(
   ggarrange(plotA_top, plotA1, NULL, plotA2, nrow = 4, labels = c("a", "", "", "", ""), heights = c(1.3, 1, -0.05, 0.6), font.label = list(size = 10)),
-  ggarrange(plotB, plotC, nrow = 1, ncol = 2, labels = c("b", "c"), font.label = list(size = 10)), 
+  ggarrange(plotB, plotC, nrow = 1, ncol = 2, labels = c("b", "c"), widths = c(0.575, 0.425), font.label = list(size = 10)), 
   ggarrange(table5, labels = c("d"), font.label = list(size = 10)),
   nrow = 3, ncol = 1, heights = c(1.4, 0.65, 0.65)) 
 
