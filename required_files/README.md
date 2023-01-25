@@ -9,7 +9,7 @@
 - Haplogroup-associated variants extracted [from PhyloTree](https://www.phylotree.org/).
 - List of loci in the mitochondrial genome [from MITOMAP](https://www.mitomap.org/foswiki/bin/view/MITOMAP/GenomeLoci).
 
-`input_denovo`: Mitochondrial de novo mutations ascertained from publication and in-house datasets. Details on their curation is provided in the Supplementary Information, see <placeholder>.
+`input_denovo`: Mitochondrial de novo mutations ascertained from publication and in-house datasets. Details on their curation is provided in the manuscript Supplementary Information.
 
 `insilicos`: 
 - PhyloP conservation scores from alignment of 100 vertebrates, [from UCSC](http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP100way/hg38.100way.phyloP100way/).
