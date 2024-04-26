@@ -5,7 +5,7 @@ library(ggpubr)
 library(stringr)
 library(tidyr)
 
-# EXTENDED DATA FIGURE 4 
+# EXTENDED DATA FIGURE 4
 
 # Figure ED4a - generate linear plots of regional missense constraint in the protein genes
 

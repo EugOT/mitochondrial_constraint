@@ -1,94 +1,178 @@
-library(dplyr)
 library(forcats)
 library(ggplot2)
 library(ggpubr)
-
+library(spgs)
+library(stringr)
+library(tidyverse)
 
 # EXTENDED DATA FIGURE 2
 
-# Figure ED2a - violin plot to show distribution of heteroplasmy levels after one generation, to replicate Figure 2B for mature oocytes from Colgnahi et al
+# Figure ED2a - plot the mutational signature estimated by the model, across the OriB-OriH region
 
-results <- read.table("../output_files/simulation/colnaghi_etal_replication.txt", header = TRUE)
+file <- read.delim(file = '../output_files/mutation_likelihoods/mito_mutation_likelihoods_annotated.txt', header = TRUE, sep = "\t")
 
-plotA <- ggplot(data = results, aes(y = heteroplasmy, x = fct_rev(as.factor(bottleneck_size)), fill = as.factor(bottleneck_size))) +
-  geom_violin(scale = "width") + 
-  labs(x = "Bottleneck size", y = "Heteroplasmy level") +
-  paper_theme +
-  guides(fill = FALSE) +
-  stat_summary(fun = "mean", geom = "point", color = "red") +
-  scale_fill_brewer(palette = "Blues")
+# convert to pyridimine mutation
+file$mut <- paste(file$REF, ">", file$ALT, sep = "")
+file$pyr_mut <- ifelse(file$mut == "G>T","C>A",
+                     ifelse(file$mut == "G>A", "C>T",
+                            ifelse(file$mut == "G>C", "C>G",
+                                   ifelse(file$mut == "A>T", "T>A",
+                                          ifelse(file$mut == "A>C", "T>G",
+                                                 ifelse(file$mut == "A>G", "T>C", file$mut))))))
+file$pyr_tri <- ifelse(file$REF == "G" | file$REF == "A", reverseComplement(file$trinucleotide, case = "upper"), as.character(file$trinucleotide))
+file$strand <- factor(ifelse(file$REF == "G" | file$REF == "A", "Heavy", "Light"), levels = c("Light", "Heavy"), labels = c("Reference / Light", "Reverse complement / Heavy"))
 
+# subset to ori
+ori_plot <- unique(file[file$POS < 192 | file$POS > 16196, c("Likelihood", "trinucleotide", "pyr_mut", "pyr_tri", "strand")])
 
-# Figure ED2b - plotting the change in heteroplasmy between generations, as a replication of Figure 2D from Wei et al
-# will show for midpoint mutation rate, 1e-08
-# note Wei et al define de novo as being >1% heteorplasmy in offspring and not detected in mother, will apply same criteria
-
-results <- read.table("../output_files/simulation/simulation_results.txt", header = TRUE)
-
-# create a dataframe with heteroplasmy values for the same lineage across two subsequent generations
-table1 <- results[results$generation == 4 & results$mutation_rate == 1e-08,]  # ie mother
-table2 <- results[results$generation == 5 & results$mutation_rate == 1e-08,]  # ie offspring
-colnames(table2) <- c("individual2", "heteroplasmy2", "generation2", "mutation_rate2", "bottleneck_size2", "back_mutation_rate2", "starting_heteroplasmy2")
-joint_table <- cbind(table1[order(table1$individual),], table2[order(table2$individual),])
-joint_table$change <- joint_table$heteroplasmy2 - joint_table$heteroplasmy
-
-# remove any homoplasmic variants that are fixed
-joint_table <- joint_table[joint_table$heteroplasmy != 1 & joint_table$heteroplasmy2 != 1,]
-
-# label for plotting
-joint_table$label <- ifelse(joint_table$heteroplasmy < 0.01 & joint_table$heteroplasmy2 > 0.01, "de novo",
-                          ifelse(joint_table$heteroplasmy > 0.01 & joint_table$heteroplasmy2 < 0.01,"lost",
-                                 ifelse(joint_table$heteroplasmy > 0.01 & joint_table$heteroplasmy2 > 0.01,"transmitted",
-                                        ifelse(joint_table$heteroplasmy < 0.01 & joint_table$heteroplasmy2 < 0.01, "no mut", "error"))))
-
-plotB <- ggplot(data = joint_table[joint_table$label != "no mut", ], aes(color = label, x = reorder(individual, change), change)) +
-  geom_point(stat = "identity", aes(shape = 124)) +
-  labs(x = "Heteroplasmic variant rank", y = "Heteroplasmy change", color = "Label") + 
+plotA <- ggplot(data = ori_plot, aes(x = pyr_tri, y = Likelihood)) +
+  geom_bar(stat = "identity", aes(fill = strand), position = position_dodge(width = 0.9)) + 
+  scale_fill_brewer(palette = "Pastel1", name = "Strand") +
+  facet_grid(.~pyr_mut, scales = "free") + 
+  labs(x = "Trinucleotide in OriB-OriH", y = "Likelihood") + 
   paper_theme + 
-  theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        legend.key.size = unit(5, "mm"),
-        legend.box.spacing = unit(0, "pt"),
-        plot.margin = unit(c(0.25, 0.05, 0.25, 0.25), "cm")) + 
-  geom_hline(yintercept = 0) + 
-  scale_y_continuous(limits = c(-0.75, 0.75), breaks = seq(-0.75, 0.75, by = 0.25)) +
-  scale_shape_identity()
+  theme(axis.text.x  = element_text(size = 4, angle = 90, vjust = 0.5, hjust = 1),
+        plot.margin = unit(c(0.25, 0.0, 0.25, 0.25), "cm"),
+        #axis.text.x  = element_text(size = 5, angle = 90, vjust = 0.5, hjust = 1),
+        legend.position = "top",
+        legend.key.size = unit(3, "mm")) + 
+  geom_vline(xintercept = c(4.525, 8.5, 12.5), linetype = "dashed", colour = "dark grey", size = 0.25)
 
 
-# Figure ED2c - plotting the maximum heteroplasmy in all 10,000 lineages across generations
+# Figure ED2b - disease-associated variants by consequence 
 
-max_het <- aggregate(results$heteroplasmy, by = list(results$generation, results$mutation_rate), max)
-max_het <- rbind(max_het, 
-                 c(0, "1e-07", 0), c(0, "7.5e-08", 0), c(0, "5e-08", 0), c(0, "2.5e-08", 0), c(0, "1e-08", 0), c(0, "7.5e-09", 0), c(0, "5e-09", 0), c(0, "2.5e-09", 0), c(0, "1e-09", 0))  # add 0 for generation 0
-max_het$Group.2 <- factor(max_het$Group.2, levels = c("1e-07", "7.5e-08", "5e-08", "2.5e-08", "1e-08", "7.5e-09", "5e-09", "2.5e-09", "1e-09"))
+file <- read.delim(file = '../output_files/mutation_likelihoods/mito_mutation_likelihoods_annotated.txt', header = TRUE, sep = "\t")
+file$consequence_two <- factor(ifelse(grepl("MT-T", file$symbol), 'tRNA', 
+                                      ifelse(grepl("MT-R", file$symbol), 'rRNA', 
+                                             ifelse(grepl(",|lost|retained|incomplete|intergenic", file$consequence), "Other", 
+                                                    as.character(file$consequence)))),
+                               levels = c("synonymous_variant", "missense_variant", "stop_gained", "tRNA", "rRNA", "Other"),
+                               labels = c("Synonymous", "Missense", "Stop gain", "tRNA", "rRNA", "Other"))
+clinvar_included <- c("Benign", "Likely benign", "Uncertain significance", "Likely pathogenic", "Pathogenic")
+plot_data_clinvar <- as.data.frame(file[file$clinvar_interp %in% clinvar_included,] %>% group_by(consequence_two) %>% summarize(n = n()) %>% mutate(freq = n / sum(n)))
+plot_data_mitomap <- as.data.frame(file[grepl("Cfrm|Reported", file$mitomap_status),] %>% group_by(consequence_two) %>% summarize(n = n()) %>% mutate(freq = n / sum(n)))
 
-plotC <- ggplot(data = max_het, aes(y = as.numeric(x), x = as.numeric(Group.1), color = fct_rev(as.factor(Group.2)))) +
-  geom_point(size = 1) +
-  geom_line() + 
-  labs(x = "Generation", y = "Population maximum heteroplasmy") + 
+mycolors = c('#4daf4a', '#377eb8', '#b22222', '#ff7f00', '#984ea3', 'grey')
+
+plotB1 <- ggplot(plot_data_clinvar, aes(x = "", y = n, fill = consequence_two)) +
+  geom_bar(stat = "identity", color = "white") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual(values = mycolors) +
+  labs(fill = "ClinVar\nconsequences") +
+  geom_text(aes(x = 1.63, label = ifelse(consequence_two == "rRNA", "      3%", ifelse(consequence_two == "Synonymous", "5%   ", paste0(round(freq * 100, 0), "%")))), 
+            position = position_stack(vjust = .5), size = 2.25) +
+  theme_void() +
+  theme(plot.margin = unit(c(0.05, 0.15, 0.25, 0.15), "cm"),
+        #plot.margin = unit(c(0.25, 0.15, 0.25, 0.15), "cm"),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 7.5),
+        legend.key.size = unit(4.5, "mm"))
+
+plotB2 <- ggplot(plot_data_mitomap, aes(x = "", y = n, fill = consequence_two)) +
+  geom_bar(stat = "identity", color = "white") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual(values = mycolors) +
+  labs(fill = "MITOMAP\nconsequences") +
+  geom_text(aes(x = 1.63, label = paste0(round(freq * 100, 0), "%")), 
+            position = position_stack(vjust = .5), size = 2.25) +
+  theme_void() +
+  theme(plot.margin = unit(c(0.05, 0.15, 0.25, 0.15), "cm"),
+        #plot.margin = unit(c(0.25, 0.15, 0.25, 0.15), "cm"),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 7.5),
+        legend.key.size = unit(4.5, "mm"))
+
+
+# Figure ED2c - plot the observed:expected ratio and 90% confidence interval for subsets of VUS
+
+file <- read.delim(file = '../output_files/oe/disease_variants_obs_exp.txt', header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+file$group <- str_split(file$classification, "\\-", simplify = T)[,2]
+file$classification <- factor(str_split(file$classification, "\\-", simplify = T)[,1], 
+                              levels=c("Reported", "Cfrm", "Benign", "Likely benign", "Uncertain significance", "Likely pathogenic", "Pathogenic"),
+                              labels=c("Reported", "Confirmed", "Benign", "Likely benign", "Uncertain significance", "Likely pathogenic", "Pathogenic"))
+
+# combine with vus by criteria data
+vus <- read.delim(file = '../output_files/oe/vus_obs_exp.txt', header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+vus$group <- str_split(vus$classification, "\\-", simplify = T)[,1]
+file <- rbind(file[grepl("Reported|Uncertain", file$classification),], vus[grepl("PP|BP", vus$classification),])
+file$classification <- factor(file$classification, 
+                              levels=c("Reported", "MITOMAP-Reported-PP3-PM2s", "MITOMAP-Reported-BP4-BS1", "Uncertain significance", "ClinVar-Uncertain significance-PP3-PM2s"),
+                              labels=c("Reported (all)", "Reported, with pathogenic criteria", "Reported, with benign criteria", "Uncertain significance (all)", "Uncertain significance, with pathogenic criteria"))
+
+plotC <- ggplot(file, aes(y = fct_rev(classification), x = as.numeric(obs.exp))) + 
+  geom_errorbar(aes(xmin = as.numeric(lower_CI), xmax = as.numeric(upper_CI)), width = 0.75, colour = "#777575") +
+  geom_point(aes(colour = group), shape = 18, size = 6, show.legend = FALSE) +
+  facet_grid(rows = vars(group), scales = "free", space = 'free', switch = 'y') + 
+  labs(x = "observed:expected ratio") + 
   paper_theme +
-  theme(legend.key.size = unit(4, "mm"),
-        axis.title.y = element_text(size = 6.5)) +
-  ylim(c(0, 1.0)) +
-  labs(color = "Mutation rate")
+  scale_y_discrete(position = "right") +
+  xlim(0, 1.05) +
+  theme(plot.margin = unit(c(0.5, 0.0, 0.25, 1.1), "cm"),
+        axis.text.x  = element_text(size = 7), 
+        axis.title.y = element_blank(),
+        panel.background = element_rect(fill = NA, color = "grey", linetype = "solid"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank()) +
+  scale_color_manual(values = c("dark blue", "dark green"))
 
 
-# Figure ED2d - plot bootstrap data to show correlation between mutation rate and maximum heteroplasmy
+# Figure ED2d - plot the observed:expected ratio and 90% confidence interval for different categories of in silico prediction
 
-results <- read.table("../output_files/simulation/sampling_max_heteroplasmy.txt", header = TRUE)
-results$mutation_rate <- factor(results$mutation_rate, levels = c("1e-07", "7.5e-08", "5e-08", "2.5e-08", "1e-08", "7.5e-09", "5e-09", "2.5e-09", "1e-09"))
+file <- read.delim(file = '../output_files/oe/insilicos_obs_exp.txt', header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+file$group <- factor(str_split(file$prediction, "\\-", simplify = T)[,2], 
+                     levels = c("APOGEE", "MitoTip", "HmtVar")) 
+file$group2 <- ifelse(file$group == "APOGEE", "Missense", "tRNA")
+file$prediction <- factor(str_split(file$prediction, "\\-", simplify = T)[,1], 
+                          levels=c("polymorphic", "likely_polymorphic", "likely_pathogenic", "pathogenic", "likely benign", "possibly benign", "possibly pathogenic", "likely pathogenic", "Neutral", "Pathogenic"),
+                          labels=c("Polymorphic", "Likely polymorphic", "Likely pathogenic", "Pathogenic", "Likely benign", "Possibly benign", "Possibly pathogenic", "Likely pathogenic", "Neutral", " Pathogenic"))
 
-plotD <- ggplot(data = results, aes(y = as.numeric(max_heteroplasmy), x = fct_rev(mutation_rate), fill = fct_rev(mutation_rate))) +
-  geom_boxplot() + 
-  labs(x = "Mutation rate", y = "Maximum heteroplasmy") + 
-  ylim(0, 1) +
+plotD <- ggplot(file, aes(y = prediction, x = as.numeric(obs.exp))) + 
+  geom_errorbar(aes(xmin = as.numeric(lower_CI), xmax = as.numeric(upper_CI)), width = 0.9, colour = "#777575") +
+  geom_point(aes(colour = group2), shape = 18, size = 6) +
+  labs(x = "observed:expected ratio") + 
   paper_theme +
-  theme(axis.text.x = element_text(size = 7)) + 
-  guides(fill = FALSE)
+  facet_grid(rows = vars(group), scales = "free", space = 'free') +
+  theme(axis.title.y = element_blank(),
+        panel.background = element_rect(fill = NA, color = "grey", linetype = "solid"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        strip.text.y = element_text(size = 7)) +
+  scale_color_manual(values = c('#377eb8', '#ff7f00'), name = "Algorithm for:") +
+  guides(color = FALSE) 
 
 
-# collate figure 
-ggarrange(plotA, plotB, plotC, plotD, ncol = 2, nrow = 2, heights = c(1, 1.15), labels = c('a', 'b', 'c', 'd'), font.label = list(size = 10))
+# Figure ED2e - plot the observed:expected ratio and 90% confidence interval for functional classes of variation in mtDNA in HelixMTdb
 
-ggsave("extended_data_figures/FigureED2.jpeg", width = 180, height = 100, dpi = 600, units = c("mm"))
+file <- read.delim(file = '../output_files/oe/replication_dataset/helix_consequences_obs_exp.txt', header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+file <- file[!grepl("lost", file$consequence), ]
 
+file$group <- factor(ifelse(grepl("RNA", file$consequence), "RNA", 
+                            ifelse(file$consequence == "intergenic", "Noncoding", 
+                                   "Protein")),
+                     levels = c("Protein", "RNA", "Noncoding"),
+                     labels = c("Protein", "RNA", "Other"))
+file$consequence <- factor(file$consequence, levels = c("synonymous", "missense", "stop_gain", "tRNA", "rRNA", "intergenic"), 
+                           labels = c("Synonymous", "Missense", "Stop gain", "tRNA", "rRNA", "Intergenic"))
+
+mycolors = c('#4daf4a', '#377eb8', '#b22222', '#ff7f00', '#984ea3', '#ffcc00')
+
+plotE <- ggplot(file, aes(y = fct_rev(consequence), x = as.numeric(obs.exp))) + 
+  geom_errorbar(aes(xmin = as.numeric(lower_CI), xmax = as.numeric(upper_CI)), width = 0.65, colour = "#777575") +
+  geom_point(aes(colour = consequence), shape = 18, size = 6, show.legend = FALSE) +
+  labs(x = "observed:expected ratio in HelixMTdb") + 
+  paper_theme +
+  theme(axis.title.y = element_blank(),
+        panel.background = element_rect(fill = NA, color = "grey", linetype = "solid"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank()) +
+  facet_grid(rows = vars(group), scales="free", space='free') + 
+  scale_color_manual(values = mycolors)
+
+
+# compile panel
+ggarrange(ggarrange(plotA, plotB1, nrow = 1, ncol = 2, widths = c(2.1, 1), labels = c("a", "b"), font.label = list(size = 10)),
+          ggarrange(plotC, plotB2, nrow = 1, ncol = 2, widths = c(2.1, 1), labels = c("c", ""), font.label = list(size = 10)),
+          ggarrange(plotD, plotE, nrow = 1, ncol = 2, widths = c(1, 0.9), labels = c("d", "e"), font.label = list(size = 10)),
+          nrow = 3, ncol = 1, heights = c(0.7, 0.7 , 1), labels = c("", "", ""), font.label = list(size = 10))
+
+ggsave("extended_data_figures/FigureED2.jpeg", width = 180, height = 170, dpi = 600, units = c("mm"))  
