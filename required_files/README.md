@@ -23,7 +23,14 @@
 - tRNA position numbers, source file obtained [from MitoTIP](https://github.com/sonneysa/MitoTIP/) and manually converted to a list of tRNA positions for each mtDNA coordinate.
 - RNA modifications and tRNA domains, obtained as previously described [by Lake et al](https://academic.oup.com/bioinformatics/article/38/10/2967/6567356).
 - RNA base type extracted from manually curated data reported previously [by Lake et al](https://academic.oup.com/bioinformatics/article/38/10/2967/6567356), using file `all_RNA_bases.tsv`.
-- Bases involved in rRNA:rRNA bridges curated from [PMID:25838379](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4501431/)
+- Bases involved in rRNA:rRNA bridges curated from [PMID:25838379](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4501431/).
+- Alignment of mitochondrial reference sequences for human and chimpanzee, obtained using reference sequences from [NCBI](https://www.ncbi.nlm.nih.gov/datasets/genome/). 
+- Data on mitochondrial genome variation in the UK Biobank, obtained from [Hong, Battle et al](https://www.nature.com/articles/s41467-023-41785-7).
+
+*The following are for nuclear genes:*
+- Nuclear gene missense constraint metrics obtained from [Karczewski et al](https://www.nature.com/articles/s41586-020-2308-7).
+- Essential genes obtained [from IMPC](https://www.ebi.ac.uk/mi/impc/essential-genes-search/).
+- Developmental disorder genes obtained [from DECIPHER](https://www.deciphergenomics.org/ddd/ddgenes).
 
 `synthetic_vcf`: Files in this directory obtained as described [previously](https://github.com/broadinstitute/gnomad-mitochondria/tree/main/gnomad_mitochondria/manuscript_analyses).
 
