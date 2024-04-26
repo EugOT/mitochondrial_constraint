@@ -25,25 +25,32 @@ paper_theme <- theme(plot.title = element_text(size = 8),
 source("Figure1.R", echo = TRUE) 
 source("Figure2.R", echo = TRUE)
 source("Figure3.R", echo = TRUE)
-# Figure4 assembled separately as svg
+source("Figure4.R", echo = TRUE)
 source("Figure5.R", echo = TRUE)
 
 # extended data figures
-source("FigureED1.R", echo = TRUE) 
+# FigureED1 assembled separately
 source("FigureED2.R", echo = TRUE)
 source("FigureED3.R", echo = TRUE)
 source("FigureED4.R", echo = TRUE) 
 source("FigureED5.R", echo = TRUE) 
 source("FigureED6.R", echo = TRUE) 
-source("FigureED7.R", echo = TRUE) 
-source("FigureED8.R", echo = TRUE) 
+# FigureED7 assembled separately as svg
+source("FigureED8.R", echo = TRUE)
+source("FigureED9.R", echo = TRUE)
+source("FigureED10.R", echo = TRUE) 
 
 # supplementary figures
 source("FigureS1.R", echo = TRUE) 
 source("FigureS2.R", echo = TRUE) 
 source("FigureS3.R", echo = TRUE) 
-# FigureS4 assembled separately as illustration
+source("FigureS4.R", echo = TRUE) 
 source("FigureS5.R", echo = TRUE)
+# FigureS6 assembled separately as illustration
+source("FigureS7.R", echo = TRUE)
+source("FigureS8.R", echo = TRUE)
+source("FigureS9.R", echo = TRUE)
+source("FigureS10.R", echo = TRUE)
 
 # supplementary datasets
 source("Supplementary_Datasets.R")
