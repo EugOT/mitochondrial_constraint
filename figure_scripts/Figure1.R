@@ -44,7 +44,7 @@ file <- file[!grepl("lost", file$consequence), ]
 file$group <- factor(ifelse(grepl("RNA", file$consequence), "RNA", ifelse(file$consequence == "intergenic", "Other", "Protein")),
                      levels = c("Protein", "RNA", "Other"))
 file$consequence <- factor(file$consequence, levels = c("synonymous", "missense", "stop_gain", "tRNA", "rRNA", "intergenic"), 
-                           labels = c("Synonymous", "Missense", "Stop gain", "tRNA", "rRNA", "Intergenic"))
+                           labels = c("Synonymous", "Missense", "Stop gain", "tRNA", "rRNA", "Non-coding"))
 # colors used within the manuscript for each functional class
 mycolors = c('#4daf4a', '#377eb8', '#b22222', '#ff7f00', '#984ea3', '#ffcc00')
 

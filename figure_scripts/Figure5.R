@@ -1,142 +1,172 @@
-library(data.table)
 library(dplyr)
 library(ggplot2)
 library(ggpubr)
+library(ggsignif)
 library(png)
-library(stringr)
-library(readr)
+library(tidyr)
+
 
 # FIGURE 5
 
-# Figure 5a - plot of local constraint across mtDNA
+# Figure 5a - sanger sequencing results
 
-scores <- read.delim(file = '../output_files/local_constraint/per_base_local_constraint.txt', header = TRUE, sep = "\t")
-
-svg <- readPNG("figures/Figure5a_top.png") 
-plotA_top <- ggplot() + 
-  background_image(svg) +
-  theme(plot.margin = unit(c(0.05, 1.25, 0.05, 0.9), "cm"),
+png <- readPNG("figures/Figure5a_sanger.png") 
+plotA <- ggplot() + 
+  background_image(png) +
+  theme(plot.margin = unit(c(0.05, 0.25, 0.05, 0.25), "cm"),
         panel.background = element_blank())
 
-plotA1 <- ggplot(scores, aes(x = as.numeric(POS), y = as.numeric(MLC_pos_score))) +
-  geom_line(aes(color = pctRank_mean_OEUF)) + 
-  scale_color_gradient2(midpoint = 0.5, low = "blue", mid = "white", high = "red", space = "Lab", limits = c(0, 1)) +
-  scale_x_continuous(expand = c(0, 0), breaks = c(1, 16569)) + 
-  ylim(0, 1) + 
-  labs(color = "MLC score", x = "Position", y = "MLC score") + 
+
+# Figure 5b - cell confluence measurements in base edited cells
+
+file_long <- read.delim(file = '../base_editing/functional_data/incucyte_cell_growth.tsv', header = TRUE, sep = "\t")
+
+for_plot <- as.data.frame(file_long[!is.na(file_long$value) & !grepl("Std", file_long$variable),] %>% group_by(Elapsed, variable) %>% 
+                            summarize(mean = mean(value), sd = sd(value), n = n(), sem = sd(value)/sqrt(n())))
+
+for_plot$media <- factor(ifelse(grepl("glu", for_plot$variable), "GLU", "GAL"), levels = c("GLU", "GAL"))
+for_plot$group <- ifelse(grepl("dead", for_plot$variable), "dead", "edited")
+for_plot$target <- factor(substr(for_plot$variable, 2, 5), levels = c("5147", "3047", "3075"))
+
+# define colors and linetypes
+for_plot$label <- factor(paste(for_plot$group, for_plot$target, sep = "-"), 
+                         levels = c("dead-5147", "edited-5147", "dead-3047", "edited-3047", "dead-3075", "edited-3075"), 
+                         labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"))
+
+colors <- c("Dead-ND2-5147" = "#4CBB17", "Dead-RNR2-3075" = "#880085", "Dead-RNR2-3047" = "#6050dc", "ND2-5147" = "#4CBB17", "RNR2-3075"  = "#880085", "RNR2-3047" = "#6050dc")
+alphas <- c("Dead-ND2-5147" = 1.0, "Dead-RNR2-3047" = 1.0, "Dead-RNR2-3075" = 1.0, "ND2-5147" = 0.35,  "RNR2-3047"  = 0.35, "RNR2-3075" = 0.35)
+
+# exclude timepoints missing measurements - 12 for 3075, 12 for 5147 and 39 for 3047
+for_plot$exclude <- paste(for_plot$Elapsed, for_plot$target)
+for_plot <- for_plot[!grepl("39 3047", for_plot$exclude) & !grepl("12 3075", for_plot$exclude) & !grepl("12 5147", for_plot$exclude),]
+
+# plot
+plotB <- ggplot(data=for_plot, aes(x = Elapsed, y = mean, color = label)) +
+  geom_line(aes(alpha = label)) +
+  geom_point(size = 1, aes(alpha = label)) +
+  scale_y_continuous(breaks = c(0, 50, 100), expand = c(0, 0), limits = c(0, 110)) +
+  facet_grid(media~target, scales = "free") + 
+  labs(x = 'Time (hours)', y = 'Cell confluency %', color = 'Group') +
+  geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem, alpha = label), width = .5) + 
   paper_theme +
-  theme(plot.margin = unit(c(0, 0.25, 0, 0.25), "cm"),
-        axis.title.x = element_text(vjust = 5),
-        legend.key.height = unit(0.4, 'cm')) +
-  geom_hline(yintercept = 0.95, linetype = "dashed", color = "dark grey", size = 0.2)
-
-svg <- readPNG("figures/Figure5a_mtDNA.png") 
-plotA2 <- ggplot() + 
-  background_image(svg) +
-  theme(plot.margin = unit(c(0, 1.73, 0.25, 0.8), "cm"))
-
-
-# Figure 5b - stacked bar plot to show the proportion of each locus type across local constraint score bins
-
-# divide into four bins
-scores$rank_bin <- ifelse(scores$MLC_pos_score <= 0.25, "0.0-0.25", 
-                          ifelse(scores$MLC_pos_score > 0.25 & scores$MLC_pos_score <= 0.5, "0.25-0.50", 
-                                 ifelse(scores$MLC_pos_score > 0.5 & scores$MLC_pos_score <= 0.75, "0.50-0.75", 
-                                        ifelse(scores$MLC_pos_score > 0.75, "0.75-1.0", "error"))))
-# assign biotype
-scores$biotype <- ifelse(grepl("intergenic",scores$consequence), "Non-coding",
-                         ifelse(grepl("MT-R",scores$symbol), "rRNA",
-                                ifelse(grepl("MT-T",scores$symbol), "tRNA",
-                                       ifelse(grepl("MT-A|MT-C|MT-N",scores$symbol), "Protein", "Error"))))
-# biotype colors
-mycolors = c('#ffcc00', '#377eb8', '#984ea3', '#ff7f00')
-
-plotB <- ggplot(scores[!duplicated(scores$POS),], aes(rank_bin, fill = biotype, color = biotype)) + 
-  geom_bar(position = "fill", color = "black", size = 0.25, width = 0.9) +
-  labs(x = 'MLC score quartile', y = 'Proportion', fill = 'Locus type') +
-  paper_theme + 
-  scale_fill_manual(values = mycolors) +
-  scale_colour_manual(values = mycolors, guide = FALSE) +
-  theme(plot.margin = unit(c(0.3, 0.25, 0.25, 0.5), "cm"))
+  theme(legend.key.height = unit(0.5, 'cm'),
+        panel.spacing = unit(0.35, "cm", data = NULL),
+        plot.margin = unit(c(0.25, 0.4, 0.25, 0.4), "cm")) + 
+  scale_alpha_manual(labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047",  "Dead-RNR2-3075", "RNR2-3075"), 
+                     values = alphas, name = "DdCBE") +
+  scale_color_manual(labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047",  "Dead-RNR2-3075", "RNR2-3075"), 
+                     values = colors, name = "DdCBE",
+                     guide = guide_legend(override.aes = list(alphas = c(1.0, 0.35))))
 
 
-# Figure 5c - bar plot to show the odds ratio enrichment of pathogenic vs benign variants across local constraint score bins
+# Figure 5c - seahorse measurements in base edited cells
 
-# divide into four bins
-scores$rank_bin <- ifelse(scores$MLC_pos_score <= 0.25, "0.0-0.25", 
-                          ifelse(scores$MLC_pos_score > 0.25 & scores$MLC_pos_score <= 0.5, "0.25-0.50", 
-                                 ifelse(scores$MLC_pos_score > 0.5 & scores$MLC_pos_score <= 0.75, "0.50-0.75", 
-                                        ifelse(scores$MLC_pos_score > 0.75, "0.75-1.0", "error"))))
+# load file and standarize minutes
+file <- read.delim(file = '../base_editing/functional_data/seahorse_respiration.tsv', header = TRUE, sep = "\t")
 
-# assign pathogenic or benign status, including pathogenic and likely pathogenic in clinvar
-scores$group <- ifelse(grepl("Cfrm", scores$mitomap_status) | grepl("athogenic", scores$clinvar_interp), "Pathogenic",
-                        ifelse(grepl("Benign", scores$clinvar_interp), "Benign", "neither")) 
+# compute mean and sd across experimental replicates
+for_plot <- as.data.frame(file %>% group_by(group, minute) %>% summarize(mean = mean(units), sd = sd(units), n = n(), sem = sd(units)/sqrt(n())))
+for_plot$group <- factor(for_plot$group, 
+                         levels = c("Dead-5147", "5147", "Dead-3047", "3047", "Dead-3075", "3075"), 
+                         labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"))
 
-odds_ratio <- function(df) {
-  output <- data.frame(matrix(vector(), ncol = 7))
-  colnames(output) <-c("bin", "value", "se", "lower_CI", "upper_CI", "number_pathogenic", "number_benign")
-  output[1,] <- c(NA, NA, NA, NA, NA, NA, NA)
-  
-  n_pathogenic <- nrow(df[df$group == "Pathogenic", ]) 
-  n_benign <- nrow(df[df$group == "Benign", ])
-  
-  for(group in list("0.0-0.25", "0.25-0.50", "0.50-0.75", "0.75-1.0") ){
-    a = nrow(df[df$rank_bin == group & df$group == "Pathogenic", ])
-    b = nrow(df[df$rank_bin == group & df$group == "Benign", ])
-    c = n_pathogenic - a
-    d = n_benign - b
-    OR <- round((a / b) / (c / d), digits = 4)
-    OR_se <- round(sqrt((1 / a) + (1 / b) + (1 / c) + (1 / d)), digits = 4)
-    OR_lowerCI <- round(exp(log(OR) - (1.96 * OR_se)), digits = 4)
-    OR_upperCI <- round(exp(log(OR) + (1.96 * OR_se)), digits = 4)
-    
-    row <- as.data.frame(t(c(group, OR, OR_se, OR_lowerCI, OR_upperCI, a, b)))
-    colnames(row) <- c("bin", "value", "se", "lower_CI", "upper_CI", "number_pathogenic", "number_benign")
-    output <- rbind(output, row)
+# define colors and linetypes
+colors <- c("Dead-ND2-5147" = "#4CBB17", "Dead-RNR2-3075" = "#880085", "Dead-RNR2-3047" = "#6050dc", "ND2-5147" = "#4CBB17", "RNR2-3075"  = "#880085", "RNR2-3047" = "#6050dc")
+linetypes <- c("Dead-ND2-5147" = "solid", "Dead-RNR2-3047" = "solid", "Dead-RNR2-3075" = "solid", "ND2-5147" = "dashed",  "RNR2-3047"  = "dashed", "RNR2-3075" = "dashed")
+
+# plot
+plotC <- ggplot(data = for_plot, aes(x = minute, y = mean, color = group)) +
+  geom_line(aes(linetype = group)) +
+  geom_point(size = 1, show.legend = FALSE) +
+  labs(x = 'Time (minutes)', y = 'OCR (pmol/min/confluence)') +
+  geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem), width = .75) + 
+  paper_theme +
+  theme(legend.key.height = unit(0.5, 'cm'),
+        plot.margin = unit(c(0.25, 0.4, 0.25, 0.4), "cm")) + 
+  scale_x_continuous(breaks = c(0, 20, 40, 60, 80), limits = c(0, 80)) +
+  scale_y_continuous(breaks = c(0, 0.5, 1, 1.5, 2, 2.5)) +
+  geom_vline(xintercept = c(18, 38, 59), linetype = "dashed", colour = "dark grey", size = 0.25) +
+  scale_linetype_manual(labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047",  "Dead-RNR2-3075", "RNR2-3075"), 
+                        values = linetypes, name = "DdCBE") +
+  scale_color_manual(labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047",  "Dead-RNR2-3075", "RNR2-3075"), 
+                     values = colors, name = "DdCBE",
+                     guide = guide_legend(override.aes = list(linetype = c("solid", "dashed")))) +
+  annotate("text", x = c(18, 38, 59), y = 2.7, label = c('Oligomycin', 'FCCP', 'Rotenone +\nAntimycin A'), size = 2.5) +
+  coord_cartesian(ylim = c(0, 2.5), clip = 'off')
+
+
+# Figure 5d - relative seahorse measurements in base edited cells
+
+file <- read.delim(file = '../base_editing/functional_data/seahorse_relative_OCR.tsv', header = TRUE, sep = "\t")
+
+# calculate the mean values for each assay across replicates, across all dead controls - this also captures variation in dead plasmid controls
+controls <- as.data.frame(file[grepl("Dead", file$group),] %>% group_by(assay) %>% summarize(ctl_mean = mean(unit), sd = sd(unit), n = n(), sem = sd(unit)/sqrt(n())))
+file <- merge(file, controls[,c("ctl_mean", "assay")], by = "assay")
+file$relative_unit <- file$unit/file$ctl_mean
+
+# taking mean across biological replicates, using values normalized to the mean of all dead controls, across experiments, for each assay
+for_plot <- as.data.frame(file %>% group_by(group, assay) %>% summarize(rel_mean = mean(relative_unit), sd = sd(relative_unit), n = n(), sem = sd(relative_unit)/sqrt(n())))
+
+# as check, this is the mean of all dead controls for each assay; i.e. 1.0
+as.data.frame(file[grepl("Dead", file$group),] %>% group_by(assay) %>% summarize(mean = mean(relative_unit)))
+
+# compute p-values, relative to all dead controls 
+assays = c("ATP_production", "Basal_respiration", "Maximal_respiration", "Proton_leak")
+targets = c("5147", "3047", "3075")
+
+sink("../base_editing/functional_data/relative_OCR_pvalues.txt")
+for(assay in assays){
+  for(target in targets){
+    for(dead in targets){
+      print(paste(assay, ":", target, "vs Dead-", dead, sep = " "))
+      print(t.test(file[file$group == target & file$assay == assay, c("relative_unit")],
+                   file[file$group == paste("Dead-", dead, sep="") & file$assay == assay, c("relative_unit")],
+                   alternative = c("two.sided"),
+                   conf.level = 0.95)$p.value)
+    }
   }
-  output <- output[!is.na(output$bin), ]
-  return(output)
 }
+sink()
 
-# restrict to missense (most severe) and RNA base changes (ie in genes) - position score same as variant score for these
-or <- odds_ratio(scores[grepl("missense|transcript", scores$consequence) & !grepl("gain|lost|terminal", scores$consequence),])
 
-fisher.test(data.frame(
-  "pathogenic" = as.numeric(or[, c("number_pathogenic")]),
-  "benign" = as.numeric(or[, c("number_benign")]),
-  row.names = c("0.0-0.25", "0.25-0.50", "0.50-0.75", "0.75-1.0"),
-  stringsAsFactors = FALSE
-))
+# define levels and labels for plotting
+for_plot$assay <- factor(for_plot$assay, 
+                         levels = c("Basal_respiration", "ATP_production", "Proton_leak", "Maximal_respiration"), 
+                         labels = c("Basal respiration", "ATP production", "Proton leak", "Maximal respiration"))
+for_plot$group <- factor(for_plot$group, 
+                         levels = c("Dead-5147", "5147", "Dead-3047", "3047", "Dead-3075", "3075"), 
+                         labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"))
 
-plotC <- ggplot(or, aes(x = bin, y = as.numeric(value), fill = bin)) + 
-  geom_bar(stat = "identity", color = "black") +
-  geom_errorbar(aes(ymin = as.numeric(lower_CI), ymax = as.numeric(upper_CI)), width = 0.5, position = position_dodge(.9), size = 0.5) +
-  scale_y_sqrt(expand = c(0, 0), breaks = c(0, 1, 5, 10)) + 
+# define colors and alphas for plotting
+colors <- c("Dead-ND2-5147" = "#4CBB17", "Dead-RNR2-3075" = "#880085", "Dead-RNR2-3047" = "#6050dc", "ND2-5147" = "#4CBB17", "RNR2-3075"  = "#880085", "RNR2-3047" = "#6050dc")
+alphas <- c("Dead-ND2-5147" = 1.0, "Dead-RNR2-3047" = 1.0, "Dead-RNR2-3075" = 1.0, "ND2-5147" = 0.35,  "RNR2-3047"  = 0.35, "RNR2-3075" = 0.35)
+file$group <- factor(file$group, 
+                     levels = c("Dead-5147", "5147", "Dead-3047", "3047", "Dead-3075", "3075"), 
+                     labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"))
+
+# plot
+plotD <- ggplot(data = for_plot, aes(x = assay, y = rel_mean, fill = group)) +
+  geom_bar(stat = "identity", color = "black", position = position_dodge(), aes(alpha = group)) +
+  labs(y = 'Relative OCR') +
+  geom_errorbar(aes(ymin = rel_mean - sem, ymax = rel_mean + sem), width = .6, position = position_dodge(.9), size = 0.25, color = "black") + 
   paper_theme +
-  labs(y = "OR (pathogenic vs benign)", x = "MLC score quartile") +
-  scale_fill_manual(values = c("#542eff", "#cfb1ff", "#ffbfaa", "#ff4124"), guide = FALSE) +
-  theme(plot.margin = unit(c(0.3, 0.25, 0.25, 0.5), "cm"))
-
-# relevant statistis for manuscript
-sum(as.numeric(or$number_pathogenic))
-sum(as.numeric(or$number_benign))
-
-
-# Figure 5d - table to show the association for platelets vs neutrophils
-
-# manually screenshot and save as png, hack to get desired format
-figd <- readPNG("figures/Figure5d.png") 
-table5 <- ggplot() + 
-  background_image(figd) +
-  theme(plot.margin = unit(c(0.15, 0.5, 0, 1), "cm"),
-        panel.background = element_blank())
+  theme(axis.title.x = element_blank(), 
+        legend.key.height = unit(0.45, 'cm'), 
+        plot.margin = unit(c(0.2, 0.4, 0.25, 0.4), "cm")) +
+  scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1.0, 1.25)) + 
+  scale_fill_manual(labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"), 
+                    values = colors, name = "DdCBE") +
+  scale_alpha_manual(labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"),
+                     values = alphas, name = "DdCBE") +
+  geom_hline(yintercept = c(1), linetype = "dashed", colour = "dark grey", size = 0.25) +
+  geom_signif(y_position = rep(1.2, 8), xmin = c(0.92, 1.22, 1.92, 2.22, 2.92, 3.22, 3.62, 3.92), xmax = c(1.07, 1.37, 2.07, 2.37, 3.07, 3.37, 3.77, 4.07), annotations = c("*", "**", "*", "**", "**", "*", "*", "*"), size = 0.25, tip_length = 0.01) +
+  coord_cartesian(ylim = c(0, 1.25), clip = 'off')
 
 
-# compile figure panel
-ggarrange(
-  ggarrange(plotA_top, plotA1, NULL, plotA2, nrow = 4, labels = c("a", "", "", "", ""), heights = c(1.3, 1, -0.05, 0.6), font.label = list(size = 10)),
-  ggarrange(plotB, plotC, nrow = 1, ncol = 2, labels = c("b", "c"), widths = c(0.575, 0.425), font.label = list(size = 10)), 
-  ggarrange(table5, labels = c("d"), font.label = list(size = 10)),
-  nrow = 3, ncol = 1, heights = c(1.4, 0.65, 0.65)) 
+# collate
+ggarrange(plotA, plotB, plotC, plotD, labels = c("a", "b", "c", "d"), font.label = list(size = 10), nrow = 4, heights = c(0.45, 0.45, 0.45, 0.325))
 
-ggsave("figures/Figure5.jpeg", width = 180, height = 170, dpi = 600, units = c("mm"))
+ggsave("figures/Figure5.jpeg", width = 180, height = 170, dpi = 600, units = c("mm")) # 170 height is max
+
+
+
