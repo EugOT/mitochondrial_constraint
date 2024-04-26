@@ -40,6 +40,10 @@ def calibrate(input_file: str, obs_value: str, output_prefix: str, excluded_site
 				phylop.append(float(row["phyloP_score"]))
 				catch_list.append(row["POS"])
 	phylop_threshold = np.percentile(np.array(phylop), np.arange(0, 100, 10))[1]  # second element [1] is bottom decile
+
+	# write a file of all the neutral variants used
+	f = open('output_files/calibration/neutral_variants_used.txt', "w")
+	f.write('variant' + '\t' + 'position' + '\t' + 'source' + '\n')
 	
 	# now build dictionary
 	for row in csv.DictReader(open(input_file), delimiter='\t'):
@@ -55,6 +59,9 @@ def calibrate(input_file: str, obs_value: str, output_prefix: str, excluded_site
 					calibration = sum_obs_likelihood(
 						mutation=mutation, identifier=gene, region='ref_exc_ori', dict=calibration,
 						observed=row[obs_value], likelihood=row["Likelihood"])
+					# write to file, note variants in two genes are written twice
+					reason = 'haplogroup_variant' if (int(row["in_phylotree"]) == 1) else 'lowest_decile_phyloP'
+					f.write('m.' + str(row["POS"]) + row["REF"] + '>' + row["ALT"] + '\t' + str(row["POS"]) + '\t' + reason + '\n')
 	
 	# write to file for plotting
 	f = open('output_files/calibration/%sloci_obs_vs_scores.txt' % output_prefix, "w")
@@ -103,6 +110,9 @@ def calibrate_ori(input_file: str, obs_value: str, output_prefix: str, excluded_
 				catch_list.append(row["POS"])
 	phylop_threshold = np.percentile(np.array(phylop), np.arange(0, 100, 10))[1]  # second element [1] is bottom decile
 	
+	# write a file of all the neutral variants used
+	f = open('output_files/calibration/neutral_variants_used.txt', "a")
+	
 	# now build dictionary
 	for row in csv.DictReader(open(input_file), delimiter='\t'):
 		mutation = row["REF"] + '>' + row["ALT"]
@@ -115,6 +125,9 @@ def calibrate_ori(input_file: str, obs_value: str, output_prefix: str, excluded_
 					calibration = sum_obs_likelihood(
 						mutation=mutation, identifier=n_block, region='ori', dict=calibration,
 						observed=row[obs_value], likelihood=row["Likelihood"])
+					# write to file
+					reason = 'haplogroup_variant' if (int(row["in_phylotree"]) == 1) else 'lowest_decile_phyloP'
+					f.write('m.' + str(row["POS"]) + row["REF"] + '>' + row["ALT"] + '\t' + str(row["POS"]) + '\t' + reason + '\n')
 	
 	# write to file for plotting
 	f = open('output_files/calibration/%sloci_obs_vs_scores_ori.txt' % output_prefix, "w")

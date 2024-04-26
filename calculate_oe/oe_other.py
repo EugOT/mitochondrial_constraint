@@ -241,7 +241,7 @@ def disease_vars_oe(input_file: str, obs_value: str, fit_parameters: str, output
 	for row in csv.DictReader(open(input_file), delimiter='\t'):
 		mutation = row["REF"] + '>' + row["ALT"]
 		if int(row["POS"]) not in excluded_sites:
-			#if row["consequence"] != "intergenic_variant":  # exclude any non-coding
+			region_to_use = 'ori' if (int(row["POS"]) in ori_region) else 'ref_exc_ori'
 			status = ''
 			if "Cfrm" in row["mitomap_status"]:
 				status = "Cfrm-MITOMAP"
@@ -249,7 +249,7 @@ def disease_vars_oe(input_file: str, obs_value: str, fit_parameters: str, output
 				status = "Reported-MITOMAP"
 			if status != '':
 				mitomap_sum = sum_obs_likelihood(
-					mutation=mutation, identifier=status, region='ref_exc_ori',
+					mutation=mutation, identifier=status, region=region_to_use,
 					observed=row[obs_value], likelihood=row["Likelihood"], dict=mitomap_sum)
 	
 	for status in mitomap_status:
@@ -264,15 +264,90 @@ def disease_vars_oe(input_file: str, obs_value: str, fit_parameters: str, output
 		mutation = row["REF"] + '>' + row["ALT"]
 		if int(row["POS"]) not in excluded_sites:
 			if (row["clinvar_interp"] + "-ClinVar") in clinvar_status:
-				#if row["consequence"] != "intergenic_variant":  # exclude any non-coding
+				region_to_use = 'ori' if (int(row["POS"]) in ori_region) else 'ref_exc_ori'
 				clinvar_sum = sum_obs_likelihood(
-					mutation=mutation, identifier=row["clinvar_interp"] + "-ClinVar", region='ref_exc_ori',
+					mutation=mutation, identifier=row["clinvar_interp"] + "-ClinVar", region=region_to_use,
 					observed=row[obs_value], likelihood=row["Likelihood"], dict=clinvar_sum)
 	
 	for status in clinvar_status:
 		calculate_oe(item=status, sum_dict=clinvar_sum, fit_parameters=fit_parameters, file=file)
-		
-		
+
+
+def vus_oe(input_file: str, obs_value: str, fit_parameters: str, output_prefix: str, excluded_sites: List[int]):
+	"""Calculate the observed:expected ratio and 90% confidence interval for different subsets of VUS.
+
+	:param input_file: annotated file with mutation likelihood scores and observed maximum heteroplasmy
+	:param obs_value: the column header of observed value
+	:param fit_parameters: the path to the file with the linear equation coefficients and intercepts to use
+	:param output_prefix: string added to start of output file name
+	:param excluded_sites: list of base positions to exclude from calculations
+	"""
+	file = open('output_files/oe/%svus_obs_exp.txt' % output_prefix, "w")
+	header = "classification	variant_count	observed	expected	obs:exp	lower_CI	upper_CI"
+	file.write(header + '\n')
+	
+	# first for MITOMAP
+	mitomap_status = ["MITOMAP-Reported", "MITOMAP-Reported-PP3-PM2s", "MITOMAP-Reported-BP4-BS1"]
+	mitomap_sum = initialize_sum_dict(identifier_list=mitomap_status)
+	
+	for row in csv.DictReader(open(input_file), delimiter='\t'):
+		mutation = row["REF"] + '>' + row["ALT"]
+		if int(row["POS"]) not in excluded_sites:
+			region_to_use = 'ori' if (int(row["POS"]) in ori_region) else 'ref_exc_ori'
+			status = ''
+			if "Reported" in row["mitomap_status"]:
+				status = "MITOMAP-Reported"
+				if row["consequence"] == "missense_variant":  # just missense
+					if (row["apogee_class"] == "Pathogenic") and (float(row["mitomap_af"]) < 0.00002):
+						status = status + "-PP3-PM2s"
+					elif (row["apogee_class"] == "Neutral") and (float(row["mitomap_af"]) > 0.005):
+						status = status + "-BP4-BS1"
+				if row["symbol"].startswith('MT-T'):  # subset to tRNA
+					if ("pathogenic" in row["mitotip_class"]) and ("pathogenic" in row["hmtvar_class"])\
+							and (float(row["mitomap_af"]) < 0.00002):
+						status = status + "-PP3-PM2s"
+					elif ("benign" in row["mitotip_class"]) and ("polymorphic" in row["hmtvar_class"])\
+							and (float(row["mitomap_af"]) > 0.005):
+						status = status + "-BP4-BS1"
+			if status != '':
+				mitomap_sum = sum_obs_likelihood(
+					mutation=mutation, identifier=status, region=region_to_use,
+					observed=row[obs_value], likelihood=row["Likelihood"], dict=mitomap_sum)
+	
+	for status in mitomap_status:
+		calculate_oe(item=status, sum_dict=mitomap_sum, fit_parameters=fit_parameters, file=file)
+	
+	# next clinvar
+	clinvar_status = ["ClinVar-Uncertain significance", "ClinVar-Uncertain significance-PP3-PM2s"]
+	# manually removing "Uncertain significance-ClinVar-BP4-BS1" as none satisfy this, quick fix to avoid error
+	clinvar_sum = initialize_sum_dict(identifier_list=clinvar_status)
+	
+	for row in csv.DictReader(open(input_file), delimiter='\t'):
+		mutation = row["REF"] + '>' + row["ALT"]
+		if int(row["POS"]) not in excluded_sites:
+			region_to_use = 'ori' if (int(row["POS"]) in ori_region) else 'ref_exc_ori'
+			status = ''
+			if row["clinvar_interp"] == "Uncertain significance":
+				status = "ClinVar-Uncertain significance"
+				if row["consequence"] == "missense_variant":  # just missense
+					if (row["apogee_class"] == "Pathogenic") and (float(row["mitomap_af"]) < 0.00002):
+						status = status + "-PP3-PM2s"
+					elif (row["apogee_class"] == "Neutral") and (float(row["mitomap_af"]) > 0.005):
+						status = status + "-BP4-BS1"
+				if row["symbol"].startswith('MT-T'):  # subset to tRNA
+					if ("pathogenic" in row["mitotip_class"]) and ("pathogenic" in row["hmtvar_class"]) and (float(row["mitomap_af"]) < 0.00002):
+						status = status + "-PP3-PM2s"
+					elif ("benign" in row["mitotip_class"]) and ("polymorphic" in row["hmtvar_class"]) and (float(row["mitomap_af"]) > 0.005):
+						status = status + "-BP4-BS1"
+			if status != '':
+				clinvar_sum = sum_obs_likelihood(
+					mutation=mutation, identifier=status, region=region_to_use,
+					observed=row[obs_value], likelihood=row["Likelihood"], dict=clinvar_sum)
+	
+	for status in clinvar_status:
+		calculate_oe(item=status, sum_dict=clinvar_sum, fit_parameters=fit_parameters, file=file)
+
+
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument(
@@ -339,6 +414,12 @@ if __name__ == "__main__":
 	print(datetime.datetime.now(), "Calculate the observed:expected ratio for disease variants")
 
 	disease_vars_oe(
+		input_file=args.input, obs_value=args.obs, fit_parameters=args.parameters, output_prefix=args.prefix,
+		excluded_sites=args.exc_sites)
+	
+	print(datetime.datetime.now(), "Calculate the observed:expected ratio for subsets of VUS")
+	
+	vus_oe(
 		input_file=args.input, obs_value=args.obs, fit_parameters=args.parameters, output_prefix=args.prefix,
 		excluded_sites=args.exc_sites)
 	

@@ -136,13 +136,13 @@ def calculate_total(
 		(identifier, 'other', 'count', 'ori')]
 
 
-def calculate_CI(obs_max_het: float, total: int, exp_max_het: float, max_parameter: float = 2.0):
+def calculate_CI(obs_max_het: float, total: int, exp_max_het: float, max_parameter: float = 2.5):
 	"""Calculate the 90% confidence interval around the observed:expected ratio using a beta distribution.
 
 	:param obs_max_het: observed sum maximum heteroplasmy
 	:param total: number of possible variants
 	:param exp_max_het: expected sum maximum heteroplasmy
-	:param max_parameter: maximum varying parameter value, default = 2
+	:param max_parameter: maximum varying parameter value, default = 2.5
 	:return: lower_CI and upper_CI, the lower and upper bounds of the 90% confidence interval
 	"""
 	# compute the density of the beta distribution for a given pair of observed and expected values
@@ -211,7 +211,7 @@ def calculate_pvalue(obs_max_het: float, total: int, exp_max_het: float):
 
 def calculate_oe(
 		item: Union[str, Tuple[int, int]], sum_dict: Dict[Tuple[str, str, str, str], Union[float, int]],
-		fit_parameters: str, file: Union[TextIO, None], output: str = "write", max_parameter: float = 2.0):
+		fit_parameters: str, file: Union[TextIO, None], output: str = "write", max_parameter: float = 2.5):
 	"""Calculate observed, expected, obs:exp ratio, and 90% confidence interval.
 
 	:param item: the identifier of the variant category to calculate the expected for
@@ -219,7 +219,7 @@ def calculate_oe(
 	:param fit_parameters: the path to the file with the linear equation coefficients and intercepts to use
 	:param file: the file to write the results to, if output is "write"
 	:param output: whether to write to file, or save as dictionary, default is "write", other "dict"
-	:param max_parameter: maximum varying parameter value for calculate_CI, default = 2
+	:param max_parameter: maximum varying parameter value for calculate_CI, default = 2.5
 	"""
 	exp_max_het = calculate_exp(sum_dict=sum_dict, identifier=item, fit_parameters=fit_parameters)
 	obs_max_het = calculate_obs(sum_dict=sum_dict, identifier=item)
