@@ -7,6 +7,8 @@ library(tidyr)
 
 # simulation to show correlation between mutation rates and maximum heteroplasmy
 
+dir.create("../output_files/simulation/")
+
 # function to simulate heteroplasmy across generations (oogenesis)
 # requires input parameters, which are user supplied
 mtDNA_simulate <- function(p){
