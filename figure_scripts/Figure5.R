@@ -58,6 +58,14 @@ plotB <- ggplot(data=for_plot, aes(x = Elapsed, y = mean, color = label)) +
                      values = colors, name = "DdCBE",
                      guide = guide_legend(override.aes = list(alphas = c(1.0, 0.35))))
 
+# to write table
+for_plot$mean <- round(for_plot$mean, 4)
+for_plot$sem <- round(for_plot$sem, 4)
+
+write.table(for_plot[,c("Elapsed", "mean", "sem", "media", "group", "target", "label")], 
+            col.names = c("time_elapsed_hours", "confluency_mean", "sem", "media", "group", "target", "label"), 
+            file = 'final_figures_source_data/Figure5b.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure 5c - seahorse measurements in base edited cells
 
@@ -93,6 +101,13 @@ plotC <- ggplot(data = for_plot, aes(x = minute, y = mean, color = group)) +
                      guide = guide_legend(override.aes = list(linetype = c("solid", "dashed")))) +
   annotate("text", x = c(18, 38, 59), y = 2.7, label = c('Oligomycin', 'FCCP', 'Rotenone +\nAntimycin A'), size = 2.5) +
   coord_cartesian(ylim = c(0, 2.5), clip = 'off')
+
+# to write table
+for_plot$mean <- round(for_plot$mean, 4)
+for_plot$sem <- round(for_plot$sem, 4)
+
+write.table(for_plot[,c("group", "minute", "mean", "sem")], col.names = c("group", "minute", "OCR_mean", "sem"), 
+            file = 'final_figures_source_data/Figure5c.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure 5d - relative seahorse measurements in base edited cells
@@ -137,6 +152,11 @@ for_plot$group <- factor(for_plot$group,
                          levels = c("Dead-5147", "5147", "Dead-3047", "3047", "Dead-3075", "3075"), 
                          labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"))
 
+# define levels and labels for plotting for the source file
+file$assay <- factor(file$assay, 
+                     levels = c("Basal_respiration", "ATP_production", "Proton_leak", "Maximal_respiration"), 
+                     labels = c("Basal respiration", "ATP production", "Proton leak", "Maximal respiration"))
+
 # define colors and alphas for plotting
 colors <- c("Dead-ND2-5147" = "#4CBB17", "Dead-RNR2-3075" = "#880085", "Dead-RNR2-3047" = "#6050dc", "ND2-5147" = "#4CBB17", "RNR2-3075"  = "#880085", "RNR2-3047" = "#6050dc")
 alphas <- c("Dead-ND2-5147" = 1.0, "Dead-RNR2-3047" = 1.0, "Dead-RNR2-3075" = 1.0, "ND2-5147" = 0.35,  "RNR2-3047"  = 0.35, "RNR2-3075" = 0.35)
@@ -147,11 +167,12 @@ file$group <- factor(file$group,
 # plot
 plotD <- ggplot(data = for_plot, aes(x = assay, y = rel_mean, fill = group)) +
   geom_bar(stat = "identity", color = "black", position = position_dodge(), aes(alpha = group)) +
+  geom_point(data = file, aes(x = assay, y = relative_unit, color = group), position = position_jitterdodge(dodge.width=0.9, jitter.width = 0.05), size = 0.25, color = "black") +
   labs(y = 'Relative OCR') +
   geom_errorbar(aes(ymin = rel_mean - sem, ymax = rel_mean + sem), width = .6, position = position_dodge(.9), size = 0.25, color = "black") + 
   paper_theme +
   theme(axis.title.x = element_blank(), 
-        legend.key.height = unit(0.45, 'cm'), 
+        legend.key.height = unit(0.4, 'cm'), 
         plot.margin = unit(c(0.2, 0.4, 0.25, 0.4), "cm")) +
   scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1.0, 1.25)) + 
   scale_fill_manual(labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"), 
@@ -159,14 +180,20 @@ plotD <- ggplot(data = for_plot, aes(x = assay, y = rel_mean, fill = group)) +
   scale_alpha_manual(labels = c("Dead-ND2-5147", "ND2-5147", "Dead-RNR2-3047", "RNR2-3047", "Dead-RNR2-3075", "RNR2-3075"),
                      values = alphas, name = "DdCBE") +
   geom_hline(yintercept = c(1), linetype = "dashed", colour = "dark grey", size = 0.25) +
-  geom_signif(y_position = rep(1.2, 8), xmin = c(0.92, 1.22, 1.92, 2.22, 2.92, 3.22, 3.62, 3.92), xmax = c(1.07, 1.37, 2.07, 2.37, 3.07, 3.37, 3.77, 4.07), annotations = c("*", "**", "*", "**", "**", "*", "*", "*"), size = 0.25, tip_length = 0.01) +
-  coord_cartesian(ylim = c(0, 1.25), clip = 'off')
+  geom_signif(y_position = rep(1.3, 8), xmin = c(0.92, 1.22, 1.92, 2.22, 2.92, 3.22, 3.62, 3.92), xmax = c(1.07, 1.37, 2.07, 2.37, 3.07, 3.37, 3.77, 4.07), annotations = c("*", "**", "*", "**", "**", "*", "*", "*"), size = 0.25, tip_length = 0.01) +
+  coord_cartesian(ylim = c(0, 1.4), clip = 'off')
+
+# to write table
+for_plot$rel_mean <- round(for_plot$rel_mean, 4)
+for_plot$sem <- round(for_plot$sem, 4)
+
+write.table(for_plot[,c("group", "assay", "rel_mean", "sem")], col.names = c("group", "assay", "relative_OCR", "sem"), 
+            file = 'final_figures_source_data/Figure5d.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # collate
-ggarrange(plotA, plotB, plotC, plotD, labels = c("a", "b", "c", "d"), font.label = list(size = 10), nrow = 4, heights = c(0.45, 0.45, 0.45, 0.325))
+ggarrange(plotA, plotB, plotC, plotD, labels = c("a", "b", "c", "d"), font.label = list(size = 10), nrow = 4, heights = c(0.45, 0.45, 0.45, 0.3))
 
-ggsave("figures/Figure5.jpeg", width = 180, height = 170, dpi = 600, units = c("mm")) # 170 height is max
-
+ggsave("figures/Figure5.jpeg", width = 180, height = 165, dpi = 600, units = c("mm")) # 170 height is max
 
 

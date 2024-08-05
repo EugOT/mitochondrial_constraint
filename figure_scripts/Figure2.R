@@ -26,6 +26,12 @@ plotA <- ggplot(file[file$consequence == "missense", ], aes(y = fct_rev(locus), 
         panel.grid.major = element_blank()) +
   facet_grid(rows = vars(complex), scales = "free", space = 'free')
 
+# to write table
+file$obs.exp <- round(file$obs.exp, 4)
+
+write.table(file[file$consequence == "missense", c("locus", "consequence", "variant_count", "obs.exp", "lower_CI", "upper_CI", "complex")],
+            file = 'final_figures_source_data/Figure2a.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure 2b - linear and 3D figure of regional constraint using MT-ND1 as an example
 
@@ -103,6 +109,10 @@ plotC <- ggplot(or, aes(x = bin, y = as.numeric(value), fill = bin)) +
 as.data.frame(file[file$group != "neither",] %>% group_by(group) %>% summarize(n = n()))
 as.data.frame(file[file$group != "neither",] %>% group_by(group, in_rc) %>% summarize(n = n()) %>% mutate(freq = n / sum(n)))
 
+write.table(or[, c("bin", "value", "lower_CI", "upper_CI")],
+            col.names = c("group", "OR_value", "lower_CI", "upper_CI"),
+            file = 'final_figures_source_data/Figure2c.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure 2d - plot regional missense constraint data as stacked bar to show proportions for clinical classifications
 
@@ -134,6 +144,13 @@ plotD <- ggplot(file[!is.na(file$Classification), ], aes(group, fill = in_rc)) +
         plot.margin = unit(c(0.25, 0.2, 0.25, 0.4), "cm")) +
   scale_fill_manual(values = c("#ff4040","#926281", "#377eb8"), 
                     labels = c("Within", "Proximal", "Outside"), name = "Regional\nmissense\nconstraint", guide = FALSE) 
+
+# remove new lines for writing
+file$group <- gsub("\n", " ", file$group)
+
+write.table(file[!is.na(file$Classification), c("POS", "REF", "ALT", "group", "in_rc")],
+            col.names = c("position", "ref", "alt", "classification_group", "in_rc"),
+            file = 'final_figures_source_data/Figure2d.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # compile panel

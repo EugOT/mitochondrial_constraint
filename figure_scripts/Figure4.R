@@ -59,6 +59,9 @@ plotB <- ggplot(scores[!duplicated(scores$POS),], aes(rank_bin, fill = biotype, 
   scale_colour_manual(values = mycolors, guide = FALSE) +
   theme(plot.margin = unit(c(0.3, 0.25, 0.25, 0.5), "cm"))
 
+write.table(unique(scores[, c("POS", "MLC_pos_score", "rank_bin", "biotype")]),
+            file = 'final_figures_source_data/Figure4a-b.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure 4c - bar plot to show the odds ratio enrichment of pathogenic vs benign variants across local constraint score bins
 
@@ -117,6 +120,11 @@ plotC <- ggplot(or, aes(x = bin, y = as.numeric(value), fill = bin)) +
   scale_fill_manual(values = c("#542eff", "#cfb1ff", "#ffbfaa", "#ff4124"), guide = FALSE) +
   theme(plot.margin = unit(c(0.3, 0.25, 0.25, 0.5), "cm"))
 
+write.table(or[, c("bin", "value", "lower_CI", "upper_CI")],
+            col.names = c("group", "OR_value", "lower_CI", "upper_CI"),
+            file = 'final_figures_source_data/Figure4c.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
+
 # relevant statistis for manuscript
 sum(as.numeric(or$number_pathogenic))
 sum(as.numeric(or$number_benign))
@@ -137,6 +145,6 @@ ggarrange(
   ggarrange(plotA_top, plotA1, NULL, plotA2, nrow = 4, labels = c("a", "", "", "", ""), heights = c(1.3, 1, -0.05, 0.6), font.label = list(size = 10)),
   ggarrange(plotB, plotC, nrow = 1, ncol = 2, labels = c("b", "c"), widths = c(0.575, 0.425), font.label = list(size = 10)), 
   ggarrange(table5, labels = c("d"), font.label = list(size = 10)),
-  nrow = 3, ncol = 1, heights = c(1.4, 0.65, 0.65)) 
+  nrow = 3, ncol = 1, heights = c(1.4, 0.65, 0.40)) 
 
-ggsave("figures/Figure4.jpeg", width = 180, height = 170, dpi = 600, units = c("mm"))
+ggsave("figures/Figure4.jpeg", width = 180, height = 160, dpi = 600, units = c("mm"))
