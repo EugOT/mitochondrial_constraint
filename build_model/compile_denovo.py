@@ -117,11 +117,12 @@ def extract_denovo(file: TextIO):
                          variant=(row[5] + row[3] + row[6]), dict=sample_counts)
 
     # dataset 5 - from my own SPARK analyses
-
-    for row in csv.DictReader(open('required_files/input_denovo/germline/SPARK_mtDNA_de_novo.txt'), delimiter='\t'):
-        s_counts = int(row["number"])  # taken directly rather than within dictionary
-        write_denovo(
-            file=file, sample=("sample_from" + "-SPARK" + "-germline"), variant=row["de_novo"], dict=s_counts)
+    # note, this cannot be released due to data restrictions
+    if os.path.exists('required_files/input_denovo/germline/SPARK_mtDNA_de_novo.txt'):
+        for row in csv.DictReader(open('required_files/input_denovo/germline/SPARK_mtDNA_de_novo.txt'), delimiter='\t'):
+            s_counts = int(row["number"])  # taken directly rather than within dictionary
+            write_denovo(
+                file=file, sample=("sample_from" + "-SPARK" + "-germline"), variant=row["de_novo"], dict=s_counts)
         
         
     # SOMATIC TISSUE
