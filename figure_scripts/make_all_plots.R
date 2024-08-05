@@ -3,6 +3,7 @@ dir.create("figures")
 dir.create("extended_data_figures")
 dir.create("supplementary_figures")
 dir.create("supplementary_datasets")
+dir.create("final_figures_source_data")
 
 library(ggplot2)
 
