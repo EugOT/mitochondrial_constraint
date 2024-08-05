@@ -62,6 +62,9 @@ plot11 <- plot
 load("extended_data_figures/rdata/MT-ND6.Rdata")
 plot12 <- plot
 
+write.table(plot_file[,c("symbol", "protein_position", "in_rc")], 
+            file = 'final_figures_source_data/FigureED4a.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure ED4b - generate linear plots of regional constraint in the rRNA genes
 
@@ -95,6 +98,9 @@ load("extended_data_figures/rdata/MT-RNR1.Rdata")
 plot13 <- plot
 load("extended_data_figures/rdata/MT-RNR2.Rdata")
 plot14 <- plot
+
+write.table(plot_file[,c("symbol", "POS", "in_rc")], col.names = c("symbol", "pos", "in_rc"),
+            file = 'final_figures_source_data/FigureED4b.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # plot as figure panel

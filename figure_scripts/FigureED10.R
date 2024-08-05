@@ -110,6 +110,10 @@ r_track2 <- ggplot(all[all$het_af_ukb > 0 & grepl("missense|stop_gained", all$co
         axis.text.y  = element_blank()) +
   scale_y_continuous(labels = label_number(accuracy = 0.0001), limits = c(-20, 10))
 
+write.table(all[order(all$POS),c("POS", "REF", "ALT", "consequence", "het_af_ukb", "MLC_var_score", "phyloP_score")],
+            col.names = c("pos", "ref", "alt", "consequence", "het_af_ukb", "MLC_score", "phyloP"),
+            file = 'final_figures_source_data/FigureED10a-b.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # collate plot
 ggarrange(

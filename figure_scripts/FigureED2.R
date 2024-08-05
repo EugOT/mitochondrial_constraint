@@ -31,12 +31,15 @@ plotA <- ggplot(data = ori_plot, aes(x = pyr_tri, y = Likelihood)) +
   facet_grid(.~pyr_mut, scales = "free") + 
   labs(x = "Trinucleotide in OriB-OriH", y = "Likelihood") + 
   paper_theme + 
-  theme(axis.text.x  = element_text(size = 4, angle = 90, vjust = 0.5, hjust = 1),
-        plot.margin = unit(c(0.25, 0.0, 0.25, 0.25), "cm"),
-        #axis.text.x  = element_text(size = 5, angle = 90, vjust = 0.5, hjust = 1),
+  theme(axis.text.x  = element_text(size = 5, angle = 90, vjust = 0.5, hjust = 1),
+        plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm"),
         legend.position = "top",
         legend.key.size = unit(3, "mm")) + 
   geom_vline(xintercept = c(4.525, 8.5, 12.5), linetype = "dashed", colour = "dark grey", size = 0.25)
+
+write.table(ori_plot, file = 'final_figures_source_data/FigureED2a.tsv', 
+            col.names = c("ori_likelihood", "ori_trinucleotide", "ori_pyrimidine_mutation", "ori_pyrimidine_trinucleotide", "ori_strand"), 
+            row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED2b - disease-associated variants by consequence 
@@ -55,32 +58,34 @@ plot_data_mitomap <- as.data.frame(file[grepl("Cfrm|Reported", file$mitomap_stat
 mycolors = c('#4daf4a', '#377eb8', '#b22222', '#ff7f00', '#984ea3', 'grey')
 
 plotB1 <- ggplot(plot_data_clinvar, aes(x = "", y = n, fill = consequence_two)) +
-  geom_bar(stat = "identity", color = "white") +
+  geom_bar(stat = "identity", color = "white", show.legend = FALSE) +
   coord_polar("y", start = 0) +
   scale_fill_manual(values = mycolors) +
-  labs(fill = "ClinVar\nconsequences") +
+  labs(title = "ClinVar") +
   geom_text(aes(x = 1.63, label = ifelse(consequence_two == "rRNA", "      3%", ifelse(consequence_two == "Synonymous", "5%   ", paste0(round(freq * 100, 0), "%")))), 
-            position = position_stack(vjust = .5), size = 2.25) +
+            position = position_stack(vjust = .5), size = 2) +
   theme_void() +
-  theme(plot.margin = unit(c(0.05, 0.15, 0.25, 0.15), "cm"),
-        #plot.margin = unit(c(0.25, 0.15, 0.25, 0.15), "cm"),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 7.5),
-        legend.key.size = unit(4.5, "mm"))
+  theme(plot.margin = unit(c(0.7, 0.1, 0.7, 0), "cm"),
+        plot.title = element_text(size = 8, hjust = 0.5))
 
 plotB2 <- ggplot(plot_data_mitomap, aes(x = "", y = n, fill = consequence_two)) +
   geom_bar(stat = "identity", color = "white") +
   coord_polar("y", start = 0) +
   scale_fill_manual(values = mycolors) +
-  labs(fill = "MITOMAP\nconsequences") +
+  labs(fill = "Consequences", title = "MITOMAP") +
   geom_text(aes(x = 1.63, label = paste0(round(freq * 100, 0), "%")), 
-            position = position_stack(vjust = .5), size = 2.25) +
+            position = position_stack(vjust = .5), size = 2) +
   theme_void() +
-  theme(plot.margin = unit(c(0.05, 0.15, 0.25, 0.15), "cm"),
-        #plot.margin = unit(c(0.25, 0.15, 0.25, 0.15), "cm"),
-        legend.title = element_text(size = 8),
-        legend.text = element_text(size = 7.5),
-        legend.key.size = unit(4.5, "mm"))
+  theme(plot.margin = unit(c(0.0, 0.25, 0, 0), "cm"),
+        legend.title = element_text(size = 7.5),
+        legend.text = element_text(size = 6.5),
+        legend.key.size = unit(4, "mm"),
+        plot.title = element_text(size = 8, hjust = 0.5))
+
+plot_data_clinvar$group <- "clinvar"
+plot_data_mitomap$group <- "mitomap"
+write.table(rbind(plot_data_clinvar, plot_data_mitomap), col.names = c("consequence", "n", "frequency", "group"),
+            file = 'final_figures_source_data/FigureED2b.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED2c - plot the observed:expected ratio and 90% confidence interval for subsets of VUS
@@ -97,7 +102,7 @@ vus$group <- str_split(vus$classification, "\\-", simplify = T)[,1]
 file <- rbind(file[grepl("Reported|Uncertain", file$classification),], vus[grepl("PP|BP", vus$classification),])
 file$classification <- factor(file$classification, 
                               levels=c("Reported", "MITOMAP-Reported-PP3-PM2s", "MITOMAP-Reported-BP4-BS1", "Uncertain significance", "ClinVar-Uncertain significance-PP3-PM2s"),
-                              labels=c("Reported (all)", "Reported, with pathogenic criteria", "Reported, with benign criteria", "Uncertain significance (all)", "Uncertain significance, with pathogenic criteria"))
+                              labels=c("Reported (all)", "Reported, with pathogenic criteria", "Reported, with benign criteria", "Uncertain significance (all)", "Uncertain significance,\nwith pathogenic criteria"))
 
 plotC <- ggplot(file, aes(y = fct_rev(classification), x = as.numeric(obs.exp))) + 
   geom_errorbar(aes(xmin = as.numeric(lower_CI), xmax = as.numeric(upper_CI)), width = 0.75, colour = "#777575") +
@@ -107,13 +112,19 @@ plotC <- ggplot(file, aes(y = fct_rev(classification), x = as.numeric(obs.exp)))
   paper_theme +
   scale_y_discrete(position = "right") +
   xlim(0, 1.05) +
-  theme(plot.margin = unit(c(0.5, 0.0, 0.25, 1.1), "cm"),
-        axis.text.x  = element_text(size = 7), 
+  theme(plot.margin = unit(c(0.5, 0.25, 0.25, 0.25), "cm"),
+        axis.text.x  = element_text(size = 6), 
         axis.title.y = element_blank(),
         panel.background = element_rect(fill = NA, color = "grey", linetype = "solid"),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank()) +
   scale_color_manual(values = c("dark blue", "dark green"))
+
+# to write table
+file$obs.exp <- round(file$obs.exp, 4)
+
+write.table(file[, c("classification", "variant_count", "obs.exp", "lower_CI", "upper_CI", "group")],
+            file = 'final_figures_source_data/FigureED2c.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED2d - plot the observed:expected ratio and 90% confidence interval for different categories of in silico prediction
@@ -124,7 +135,7 @@ file$group <- factor(str_split(file$prediction, "\\-", simplify = T)[,2],
 file$group2 <- ifelse(file$group == "APOGEE", "Missense", "tRNA")
 file$prediction <- factor(str_split(file$prediction, "\\-", simplify = T)[,1], 
                           levels=c("polymorphic", "likely_polymorphic", "likely_pathogenic", "pathogenic", "likely benign", "possibly benign", "possibly pathogenic", "likely pathogenic", "Neutral", "Pathogenic"),
-                          labels=c("Polymorphic", "Likely polymorphic", "Likely pathogenic", "Pathogenic", "Likely benign", "Possibly benign", "Possibly pathogenic", "Likely pathogenic", "Neutral", " Pathogenic"))
+                          labels=c("Polymorphic", "Likely polymorphic", "Likely pathogenic", "Pathogenic", "Likely benign", "Possibly benign", "Possibly pathogenic ", "Likely pathogenic ", "Neutral", " Pathogenic"))
 
 plotD <- ggplot(file, aes(y = prediction, x = as.numeric(obs.exp))) + 
   geom_errorbar(aes(xmin = as.numeric(lower_CI), xmax = as.numeric(upper_CI)), width = 0.9, colour = "#777575") +
@@ -139,6 +150,12 @@ plotD <- ggplot(file, aes(y = prediction, x = as.numeric(obs.exp))) +
         strip.text.y = element_text(size = 7)) +
   scale_color_manual(values = c('#377eb8', '#ff7f00'), name = "Algorithm for:") +
   guides(color = FALSE) 
+
+# to write table
+file$obs.exp <- round(file$obs.exp, 4)
+
+write.table(file[, c("prediction", "variant_count", "obs.exp", "lower_CI", "upper_CI", "group")],
+            file = 'final_figures_source_data/FigureED2d.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED2e - plot the observed:expected ratio and 90% confidence interval for functional classes of variation in mtDNA in HelixMTdb
@@ -168,10 +185,16 @@ plotE <- ggplot(file, aes(y = fct_rev(consequence), x = as.numeric(obs.exp))) +
   facet_grid(rows = vars(group), scales="free", space='free') + 
   scale_color_manual(values = mycolors)
 
+# to write table
+file$obs.exp <- round(file$obs.exp, 4)
+
+write.table(file[,c("consequence", "variant_count", "obs.exp", "lower_CI", "upper_CI", "group")],
+            file = 'final_figures_source_data/FigureED2e.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # compile panel
-ggarrange(ggarrange(plotA, plotB1, nrow = 1, ncol = 2, widths = c(2.1, 1), labels = c("a", "b"), font.label = list(size = 10)),
-          ggarrange(plotC, plotB2, nrow = 1, ncol = 2, widths = c(2.1, 1), labels = c("c", ""), font.label = list(size = 10)),
+ggarrange(plotA, 
+          ggarrange(plotB1, plotB2, plotC, nrow = 1, ncol = 3, widths = c(0.55, 1, 1.75), labels = c("b", "", "c"), font.label = list(size = 10)),
           ggarrange(plotD, plotE, nrow = 1, ncol = 2, widths = c(1, 0.9), labels = c("d", "e"), font.label = list(size = 10)),
           nrow = 3, ncol = 1, heights = c(0.7, 0.7 , 1), labels = c("", "", ""), font.label = list(size = 10))
 

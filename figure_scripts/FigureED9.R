@@ -30,9 +30,14 @@ plotA <- ggplot(scores[scores$group != "neither" & grepl("missense|transcript", 
   paper_theme +
   theme(axis.title.x = element_blank(), 
         legend.key.height = unit(0.45, 'cm'), 
-        legend.position = "left") + #,
-        #legend.margin = margin(0, 0, 0, -5)) +
+        legend.position = "left") + 
   scale_fill_manual(values = c("#ff4124", "#ffbfaa", "#cfb1ff", "#542eff")) 
+
+write.table(scores[scores$group != "neither" & grepl("missense|transcript", scores$consequence) & !grepl("gain|lost|terminal", scores$consequence),
+                   c("POS", "REF", "ALT", "rank_bin", "group")], 
+            col.names = c("pos", "ref", "alt", "MLC_bin", "group"),
+            file = 'final_figures_source_data/FigureED9a.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # summarize for reference
 as.data.frame(scores[scores$group != "neither" & grepl("missense|transcript", scores$consequence) & !grepl("gain|lost|terminal", scores$consequence),] 
@@ -53,6 +58,11 @@ plotB <- ggplot(scores[scores$group != "neither" & grepl("missense|transcript", 
         legend.position = "right",
         legend.margin = margin(c(0, 0, 0, 1.5)))
 
+write.table(scores[scores$group != "neither" & grepl("missense|transcript", scores$consequence) & !grepl("gain|lost|terminal", scores$consequence),
+                   c("POS", "REF", "ALT", "MLC_var_score", "group")], 
+            col.names = c("pos", "ref", "alt", "MLC_var_score", "group"),
+            file = 'final_figures_source_data/FigureED9b.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure ED9c - collapse disease plasmy into two groups - plot all pathogenic
 
@@ -68,6 +78,13 @@ plotC <- ggplot(scores[scores$group == "Pathogenic" & grepl("missense|transcript
   theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.5), "cm"),
         legend.position = "right",
         legend.margin = margin(c(0, 0, 0, 1.5)))
+
+write.table(scores[scores$group == "Pathogenic" & grepl("missense|transcript", scores$consequence) & !grepl("gain|lost|terminal", scores$consequence)
+                   & !grepl("nr|na", scores$mitomap_plasmy) & scores$mitomap_plasmy != "",
+                   c("POS", "REF", "ALT", "MLC_var_score", "group", "plasmy")], 
+            col.names = c("pos", "ref", "alt", "MLC_var_score", "group", "plasmy"),
+            file = 'final_figures_source_data/FigureED9c.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # write table for curation, for next plots
 scores$var <- paste("m.", scores$POS, scores$REF, ">", scores$ALT, sep = "")
@@ -89,6 +106,9 @@ plotD <- ggplot(curated[grepl("missense|transcript", curated$consequence) & !gre
   theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.5), "cm"),
         legend.position = "right",
         legend.margin = margin(c(0, 0, 0, 1.5)))
+
+write.table(curated[grepl("missense|transcript", curated$consequence) & !grepl("gain|lost|terminal", curated$consequence),], 
+            file = 'final_figures_source_data/FigureED9d.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED9e - boxplot to show the MLC score distribution for indels in population databases
@@ -136,6 +156,9 @@ plotE <- ggplot(data = indels, aes(x = db, y = MLC_pos_score, fill = db)) +
   scale_y_continuous(breaks = c(0, 0.5, 1.0)) +
   scale_fill_manual(values = c("#F9F6EE", "#F9F6EE", "#F9F6EE"), guide = FALSE)
 
+write.table(indels[order(as.numeric(indels$pos)),], 
+            file = 'final_figures_source_data/FigureED9e.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure ED9f - plot MLC position scores vs PhyloP
 
@@ -152,6 +175,13 @@ plotF <- ggplot(data = scores[!duplicated(scores$POS),], aes(x = rank_bin, y = p
   theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.35), "cm")) +
   geom_hline(yintercept = c(0), linetype = "dashed") +
   scale_fill_discrete_sequential(palette = "OrYel", guide = FALSE, order = c(1, 2, 3, 4)) 
+
+# print count per bin
+table(scores[!duplicated(scores$POS),c("rank_bin")])
+
+write.table(scores[!duplicated(scores$POS), c("POS", "phyloP_score", "rank_bin")], 
+            col.names = c("pos", "phyloP", "MLC_bin"),
+            file = 'final_figures_source_data/FigureED9f.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED9g - overlay MLC with chimpanzee data
@@ -186,6 +216,10 @@ plotG <- ggplot(for_plot, aes(x = as.numeric(POS), y = as.numeric(MLC_pos_score)
   geom_text(mapping = aes(x = 16570, y = 0), hjust = 0, size = 2.4) + 
   coord_cartesian(clip = 'off') 
 
+write.table(for_plot[order(for_plot$POS), c("POS", "REF", "ALT", "consequence", "MLC_pos_score", "chimp_match")], 
+            col.names = c("pos", "ref", "alt", "consequence", "MLC_score", "chimp_ref_match"),
+            file = 'final_figures_source_data/FigureED9g.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure ED9h - the local constraint score distribution of base/amino acids substitutions in gnomAD
 
@@ -211,6 +245,13 @@ plotH <- ggplot(data = gnomad[gnomad$type == "SNV",], aes(x = category, y = MLC_
   scale_fill_manual(values = c("dark grey", "light grey", "white"), guide = FALSE) +
   theme(axis.text.x  = element_text(size = 6.5),
         plot.margin = unit(c(0.25, 0.25, 0.25, 0.35), "cm"))
+
+# remove new lines for writing and subset
+gnomad$category <- gsub("\n", " ", gnomad$category)
+gnomad <- gnomad[gnomad$type == "SNV",]
+
+write.table(gnomad[order(gnomad$position), c("position", "ref", "alt", "filters", "AF_hom", "AF_het", "MLC_var_score", "type", "category")],
+            file = 'final_figures_source_data/FigureED9h.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED9i - the local constraint score distribution of base/amino acids substitutions in HelixMTdb
@@ -240,6 +281,13 @@ plotI <- ggplot(data = helix[helix$type == "SNV",], aes(x = category, y = MLC_va
   theme(axis.text.x  = element_text(size = 6.5),
         plot.margin = unit(c(0.25, 0.25, 0.25, 0.35), "cm"))
 
+# remove new lines for writing and subset
+helix$category <- gsub("\n", " ", helix$category)
+helix <- helix[helix$type == "SNV",]
+
+write.table(helix[order(helix$locus), c("locus", "alleles", "AF_hom", "AF_het", "MLC_var_score", "type", "category")],
+            file = 'final_figures_source_data/FigureED9i.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure ED9j - the local constraint score distribution of base/amino acids substitutions in MITOMAP
 
@@ -261,6 +309,12 @@ plotJ <- ggplot(data = mitomap[mitomap$type == "SNV",], aes(x = category, y = ML
   scale_fill_manual(values = c("dark grey", "light grey"), guide = FALSE) +
   theme(axis.text.x  = element_text(size = 6.5),
         plot.margin = unit(c(0.25, 0.25, 0.25, 0.35), "cm"))
+
+# subset for writing
+mitomap <- mitomap[mitomap$type == "SNV",]
+
+write.table(mitomap[order(mitomap$pos), c("pos", "ref", "alt", "af", "MLC_var_score", "type", "category")],
+            file = 'final_figures_source_data/FigureED9j.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # compile panel

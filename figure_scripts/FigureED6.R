@@ -25,6 +25,12 @@ plotA <- ggplot(file[grepl("MT-T", file$symbol) & file$group != "neither" & file
   labs(x = 'tRNA variants', y = "Proportion", fill = "Base type") + 
   paper_theme 
 
+write.table(file[grepl("MT-T", file$symbol) & file$group != "neither" & file$RNA_base_type != "" & !grepl(",", file$RNA_base_type), 
+                 c("POS", "REF", "ALT", "symbol", "RNA_base_type", "group")], 
+            col.names = c("pos", "ref", "alt", "symbol", "RNA_base_type", "group"),
+            file = 'final_figures_source_data/FigureED6a.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
+
 # count in each category
 as.data.frame(file[grepl("MT-T", file$symbol) & file$group != "neither" & file$RNA_base_type != "" & !grepl(",", file$RNA_base_type),] 
               %>% group_by(group, RNA_base_type) %>% summarize(n = n()) %>% mutate(freq = n / sum(n)))
@@ -38,6 +44,11 @@ plotD <- ggplot(file[grepl("MT-T", file$symbol) & file$group != "neither" & file
   labs(x = '\ntRNA variants', y = "Proportion", fill = "Domain") + 
   paper_theme +
   theme(legend.position = 'left')
+
+write.table(file[grepl("MT-T", file$symbol) & file$group != "neither" & file$tRNA_domain != "", 
+                 c("POS", "REF", "ALT", "symbol", "tRNA_domain", "group")], 
+            col.names = c("pos", "ref", "alt", "symbol", "tRNA_domain", "group"),
+            file = 'final_figures_source_data/FigureED6d.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED6b - plot the observed:expected ratio and 90% CI for modified bases
@@ -60,6 +71,12 @@ plotB <- ggplot(file[grepl("odified", file$RNA_base_type),], aes(y = fct_rev(RNA
   scale_color_manual(values = mycolors, name = "RNA type") +
   facet_grid(rows = vars(group), scales = "free", space = 'free') +
   guides(colour = FALSE)
+
+# to write table
+file$obs.exp <- round(file$obs.exp, 4)
+
+write.table(file[grepl("odified", file$RNA_base_type), c("RNA_base_type", "variant_count", "obs.exp", "lower_CI", "upper_CI", "group")],
+            file = 'final_figures_source_data/FigureED6b.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # Figure ED6c - svg to with same color gradient to show location of domains

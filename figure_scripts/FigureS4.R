@@ -90,3 +90,4 @@ plotD <- ggplot(data = results, aes(y = as.numeric(max_heteroplasmy), x = fct_re
 # collate figure 
 ggarrange(plotA, plotB, plotC, plotD, ncol = 2, nrow = 2, heights = c(1, 1.15), labels = c('a', 'b', 'c', 'd'), font.label = list(size = 10))
 
+ggsave("supplementary_figures/FigureS4.jpeg", width = 180, height = 100, dpi = 600, units = c("mm"))

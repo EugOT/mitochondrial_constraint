@@ -40,3 +40,11 @@ plotB <- ggplot(kmers[is.na(kmers$pctRank_OEUF_protein),], aes(x = expected, fil
 ggarrange(plotA, plotB, nrow = 2, labels = c("a", "b"), font.label = list(size = 10))
 
 ggsave("supplementary_figures/FigureS5.jpeg", width = 180, height = 90, dpi = 600, units = c("mm"))
+
+
+# compute n
+
+# in protein genes
+kmers[!is.na(kmers$pctRank_OEUF_protein) & is.na(kmers$pctRank_OEUF_RNA) & is.na(kmers$pctRank_OEUF_noncoding),] %>% group_by(length) %>% summarize(n = n())
+# in RNA genes and non-coding loci
+kmers[is.na(kmers$pctRank_OEUF_protein),] %>% group_by(length) %>% summarize(n = n())

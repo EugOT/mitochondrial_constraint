@@ -32,6 +32,9 @@ plotA <- ggplot(gene_oe[grepl("MT-A|MT-C|MT-N", gene_oe$locus),], aes(x = upper_
   paper_repel +
   stat_cor(method = "pearson", digits = 2, show.legend = FALSE, size = 2.5)
 
+write.table(gene_oe[grepl("MT-A|MT-C|MT-N", gene_oe$locus),], col.names = c("locus", "missense_OEUF", "median_phylop"),
+            file = 'final_figures_source_data/FigureED3a.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 # RNA genes
 gene_oe$type <- ifelse(grepl("MT-T", gene_oe$locus), "tRNA", "rRNA")
 plotB <- ggplot(gene_oe[grepl("MT-T|MT-R", gene_oe$locus),], aes(x = upper_CI, y = median_phylop_score)) + 
@@ -44,7 +47,10 @@ plotB <- ggplot(gene_oe[grepl("MT-T|MT-R", gene_oe$locus),], aes(x = upper_CI, y
   paper_repel +
   scale_color_manual(values = c('#984ea3', '#ff7f00')) +
   theme(legend.position = "none") 
-  
+
+write.table(gene_oe[grepl("MT-T|MT-R", gene_oe$locus),], col.names = c("locus", "OEUF", "median_phylop", "group"),
+            file = 'final_figures_source_data/FigureED3b.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
+
 
 # Figure ED3c - plot each tRNA's codon usage against their OEUF
 
@@ -63,6 +69,9 @@ plotC <- ggplot(gene_oe, aes(x = upper_CI, y = count)) +
   paper_repel +
   stat_cor(method = "pearson", digits = 2, show.legend = FALSE, size = 2.5) +
   theme(plot.margin = unit(c(0.25, 3, 0.25, 3), "cm"))
+
+write.table(gene_oe[,c("locus", "upper_CI", "count")], col.names = c("locus", "OEUF", "codon_count"),
+            file = 'final_figures_source_data/FigureED3c.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
 # compile panel

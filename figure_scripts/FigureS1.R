@@ -1,5 +1,5 @@
-library(tidyverse)
 library(ggplot2)
+library(tidyverse)
 
 # SUPPLEMENTARY FIGURE 1
 # plot a comparison of the likelihood of transitions across different de novo categories and maximum de novo counts per sample, using output of compare_denovo.py
@@ -26,3 +26,12 @@ ggplot(data = file_plot, aes(y = likelihood, x = threshold, color = mutation, gr
   scale_color_discrete(labels = c("A>G", "C>T", "G>A", "T>C"), name = "Mutation type")
   
 ggsave("supplementary_figures/FigureS1.jpeg", width = 180, height = 60, dpi = 600, units = c("mm"))
+
+
+# compute n
+denovo_raw <- read.delim(file = '../output_files/denovo/all_denovo.txt', header = TRUE, sep= "\t")
+denovo <- unique(denovo[,c("sample", "sample_denovo_count")])
+denovo$type <- ifelse(grepl("germline", denovo$sample), "germline",
+                      ifelse(grepl("somatic_tissue", denovo$sample), "somatic-tissue",
+                             ifelse(grepl("somatic_cancer", denovo$sample), "somatic-cancer", "NA")))
+table(denovo$type)

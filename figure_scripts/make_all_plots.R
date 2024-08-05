@@ -21,6 +21,9 @@ paper_theme <- theme(plot.title = element_text(size = 8),
                      strip.text.x = element_text(size = 8),
                      strip.text.y = element_text(size = 8))
 
+# need this for Figure2
+source("FigureED4.R", echo = TRUE) 
+
 # main text figures
 source("Figure1.R", echo = TRUE) 
 source("Figure2.R", echo = TRUE)
@@ -54,3 +57,6 @@ source("FigureS10.R", echo = TRUE)
 
 # supplementary datasets
 source("Supplementary_Datasets.R")
+
+# source data
+source("compile_source_data.R")

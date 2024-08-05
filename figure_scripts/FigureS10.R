@@ -23,6 +23,7 @@ file$name <- factor(file$name, levels = c('3047-dead', '3047-edited', '3075-dead
 
 plotB <- ggplot(data = file, aes(x = name, y = rate)) +
   geom_bar(stat = "identity") +
+  geom_point(size = 1) + 
   paper_theme +
   theme(axis.title.x = element_text(size = 6), 
         axis.text.x  = element_text(size = 6, angle = 40, hjust=1), 
