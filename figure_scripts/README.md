@@ -2,7 +2,7 @@
 
 Scripts used to generate the figures, video, and datasets for the manuscript.
 
-`make_all_plots.R` is used to generate figure panels in R and generate the source data files.
+`make_all_plots.R` is used to generate figure panels in R and generate the source data file.
 
 All *txt* files encode the commands used to visualize data on 3D structures using ChimeraX.
 
