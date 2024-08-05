@@ -32,6 +32,6 @@ select /AA:1494,1555,1076,1486,1488,1583,1584; show sel atoms; nucleotides sel a
 
 # manually zoom in and position
 
-save figure_scripts/extended_data_figures/FigureED5g_RNR1.png supersample 3
+save figure_scripts/extended_data_figures/FigureED5f_RNR1.png supersample 3
 
 
