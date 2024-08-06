@@ -85,7 +85,7 @@ write.table(unique(file[order(file$position), c("variant", "source")]),
 
 # Supplementary Dataset 9 - curated confirmed MITOMAP variants by plasmy
 
-file <- read.delim(file = 'supplementary_datasets/cnfm_by_status_curated.txt', header = TRUE, sep = "\t")
+file <- read.delim(file = '../required_files/other_annotations/cnfm_by_status_curated.txt', header = TRUE, sep = "\t")
 file$curated_homoplasmy_report <- gsub(" ", "", file$curated_homoplasmy_report)
 write.table(file[grepl("missense|transcript", file$consequence) & !grepl("gain|lost|terminal", file$consequence), c("var", "symbol", "mitomap_plasmy", "curated_status", "curated_homoplasmy_report")], 
             file = 'supplementary_datasets/supplementary_dataset_9.tsv', col.names = c("Variant", "Symbol", "MITOMAP_plasmy", "Curated_status", "Curated_homoplasmy_report"), row.names = FALSE, sep = '\t', quote = FALSE)
