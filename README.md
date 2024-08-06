@@ -26,7 +26,7 @@ The code was run using Python v3.10, R v3.6.1, and ChimeraX v1.3 on a MacOS and 
 
 A copy of this repository can be obtained on a local computer by downloading as a zip file or cloning using Git.
 
-Versions successfully used to run the code.
+R package versions successfully used to run the R scripts.
 
 ```
 R version 4.4.0 (2024-04-24)
