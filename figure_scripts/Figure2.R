@@ -116,7 +116,7 @@ write.table(or[, c("bin", "value", "lower_CI", "upper_CI")],
 
 # Figure 2d - plot regional missense constraint data as stacked bar to show proportions for clinical classifications
 
-mcri <- read.delim(file = '../../../patient_VUS/MCRI/mtDNA_variants_combined_final_copy.txt', header = TRUE, sep = "\t")
+mcri <- read.delim(file = '../required_files/other_annotations/curated_mtDNA_variants_combined_final_copy.txt', header = TRUE, sep = "\t")
 mcri$var <- paste(mcri$REF, mcri$POS, mcri$ALT)
 file <- read.delim(file='../output_files/regional_constraint/mito_regional_constraint_annotation.txt', header = TRUE, sep = "\t")
 file$var <- paste(file$REF, file$POS, file$ALT)

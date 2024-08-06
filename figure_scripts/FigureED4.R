@@ -9,6 +9,8 @@ library(tidyr)
 
 # Figure ED4a - generate linear plots of regional missense constraint in the protein genes
 
+dir.create("extended_data_figures/rdata/")
+
 file <- read.delim(file = '../output_files/regional_constraint/mito_regional_constraint_annotation.txt', header = TRUE, sep = "\t")
 file <- file[grepl("MT-A|MT-C|MT-N", file$symbol), ]
 file <- data.frame(file %>% mutate(protein_position = strsplit(as.character(protein_position), ","), symbol = strsplit(as.character(symbol), ",")) %>% unnest(protein_position, symbol))

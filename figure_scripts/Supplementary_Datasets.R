@@ -21,7 +21,7 @@ write.table(file[, c("locus", "start", "end", "protein_pos_start", "protein_pos_
 
 # Supplementary Dataset 3 - curated missense from VCGS
 
-mcri <- read.delim(file='../../../patient_VUS/MCRI/mtDNA_variants_combined_final_copy.txt', header = TRUE, sep = "\t")
+mcri <- read.delim(file='../required_files/other_annotations/curated_mtDNA_variants_combined_final_copy.txt', header = TRUE, sep = "\t")
 mcri$var <- paste(mcri$REF, mcri$POS, mcri$ALT)
 mcri$Classification <- factor(ifelse(grepl("Class 5|Class 4", mcri$Classification), "Pathogenic & Likely pathogenic",
                             ifelse(grepl("Class 1|Class 2", mcri$Classification), "Benign & Likely Benign", paste("VUS ", as.character(mcri$Classification), sep = ""))),
