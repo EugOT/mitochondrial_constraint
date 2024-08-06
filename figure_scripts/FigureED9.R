@@ -94,7 +94,7 @@ scores$var <- paste("m.", scores$POS, scores$REF, ">", scores$ALT, sep = "")
 
 # Figure ED9d - collapse disease plasmy into two groups - curated confirmed (above file modified)
 
-curated <- read.delim(file = 'required_files/other_annotations/cnfm_by_status_curated.txt', header = TRUE, sep = "\t")
+curated <- read.delim(file = '../required_files/other_annotations/cnfm_by_status_curated.txt', header = TRUE, sep = "\t")
 curated$plasmy <- ifelse(grepl("\\+\\/", curated$curated_status), "At homoplasmy", "Only at heteroplasmy")
 
 plotD <- ggplot(curated[grepl("missense|transcript", curated$consequence) & !grepl("gain|lost|terminal", curated$consequence),], aes(x = as.numeric(MLC_var_score), fill = plasmy)) + 
