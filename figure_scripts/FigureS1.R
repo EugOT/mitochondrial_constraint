@@ -30,7 +30,7 @@ ggsave("supplementary_figures/FigureS1.jpeg", width = 180, height = 60, dpi = 60
 
 # compute n
 denovo_raw <- read.delim(file = '../output_files/denovo/all_denovo.txt', header = TRUE, sep= "\t")
-denovo <- unique(denovo[,c("sample", "sample_denovo_count")])
+denovo <- unique(denovo_raw[,c("sample", "sample_denovo_count")])
 denovo$type <- ifelse(grepl("germline", denovo$sample), "germline",
                       ifelse(grepl("somatic_tissue", denovo$sample), "somatic-tissue",
                              ifelse(grepl("somatic_cancer", denovo$sample), "somatic-cancer", "NA")))
