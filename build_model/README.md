@@ -2,7 +2,7 @@
 
 These scripts were used to build the novel mitochondrial mutational model.
 
-`compile_denovo.py`: Parse lists of de novo variants obtained from the literature and an in-house dataset. Outputs list of all de novo calls and their source. The datasets ascertained from publications are provided in `required_files`; note that the one unpublished dataset used is not due to data restrictions. Details on the de novo datasets used is provided in the manuscript Supplementary Information. 
+`compile_denovo.py`: Parse lists of de novo variants obtained from the literature and an in-house dataset. Outputs list of all de novo calls and their source. The datasets ascertained from publications are provided in `required_files`; **note that the one unpublished dataset used is not provided in this repo due to data restrictions, thus results will differ slightly when only using the available datasets in this repo**. Details on the de novo datasets used is provided in the manuscript Supplementary Information. 
 
 `compare_denovo.py`: Compare the mutational likelihoods of transitions, across different sources (germline, somatic tissue, somatic cancer) and sample de novo counts.
 
