@@ -10,6 +10,6 @@ All *py* files used to generate svg figure formats.
 
 All scripts are named according to the figure, video or datasets they generate. 
 
-We also provide the *png* files needed to compile the figure panels with this code.
+We also provide *png* files needed to compile several figure panels with this code.
 
 
