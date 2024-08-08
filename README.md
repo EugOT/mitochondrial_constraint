@@ -22,6 +22,7 @@ The workflow used is reflected below. See the README in each directory for more 
 
 `figure_scripts`: scripts used for generating figures, video and datasets.
 
+## Details:
 
 The code was run using Python v3.10, R v3.6.1/v4.4.0, and ChimeraX v1.3 on a MacOS and or Linux system.
 
