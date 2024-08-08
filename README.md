@@ -27,16 +27,12 @@ The code was run using Python v3.10, R v3.6.1/v4.4.0, and ChimeraX v1.3 on a Mac
 
 A copy of this repository can be obtained on a local computer by downloading as a zip file or cloning using Git.
 
-Python libraries versions successfully used to run the R scripts.
+Python library versions successfully used to run the R scripts.
 
 ```
 Python version 3.10
 
-biopython 1.84
-numpy 1.26.4
-pandas 2.2.1
-scipy 1.14
-svglib 1.5.1
+biopython 1.84  numpy 1.26.4    pandas 2.2.1    scipy 1.14  svglib 1.5.1
 ```
 
 R package versions successfully used to run the R scripts.
