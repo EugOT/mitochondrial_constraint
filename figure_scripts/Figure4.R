@@ -125,26 +125,15 @@ write.table(or[, c("bin", "value", "lower_CI", "upper_CI")],
             file = 'final_figures_source_data/Figure4c.tsv', row.names = FALSE, sep = '\t', quote = FALSE)
 
 
-# relevant statistis for manuscript
+# relevant statistics for manuscript
 sum(as.numeric(or$number_pathogenic))
 sum(as.numeric(or$number_benign))
-
-
-# Figure 4d - table to show the association for platelets vs neutrophils
-
-# manually screenshot and save as png, hack to get desired format
-figd <- readPNG("figures/Figure4d.png") 
-table5 <- ggplot() + 
-  background_image(figd) +
-  theme(plot.margin = unit(c(0.15, 0.5, 0, 1), "cm"),
-        panel.background = element_blank())
 
 
 # compile figure panel
 ggarrange(
   ggarrange(plotA_top, plotA1, NULL, plotA2, nrow = 4, labels = c("a", "", "", "", ""), heights = c(1.3, 1, -0.05, 0.6), font.label = list(size = 10)),
   ggarrange(plotB, plotC, nrow = 1, ncol = 2, labels = c("b", "c"), widths = c(0.575, 0.425), font.label = list(size = 10)), 
-  ggarrange(table5, labels = c("d"), font.label = list(size = 10)),
-  nrow = 3, ncol = 1, heights = c(1.4, 0.65, 0.40)) 
+  nrow = 2, ncol = 1, heights = c(1.4, 0.65)) 
 
-ggsave("figures/Figure4.jpeg", width = 180, height = 160, dpi = 600, units = c("mm"))
+ggsave("figures/Figure4.jpeg", width = 180, height = 140, dpi = 600, units = c("mm"))
